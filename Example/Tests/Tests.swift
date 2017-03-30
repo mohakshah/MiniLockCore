@@ -5,10 +5,6 @@ import Nimble
 import MiniLockCore
 
 class TableOfContentsSpec: QuickSpec {
-    func blah() {
-        
-    }
-    
     override func spec() {
         describe("these will fail") {
             it("can do maths") {

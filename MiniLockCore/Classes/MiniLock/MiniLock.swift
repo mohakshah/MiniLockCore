@@ -10,7 +10,7 @@ import Foundation
 import libsodium
 import libb2s
 
-class MiniLock
+public class MiniLock
 {
 
     

@@ -12,8 +12,11 @@ import libbase58
 
 /// A wrapper class for libbase58
 
-class Base58
+public class Base58
 {
+    // Disable instantiation
+    private init() {}
+    
     public static func encode(bytes: [UInt8]) -> String {
         if bytes.isEmpty {
             return ""

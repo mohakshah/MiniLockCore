@@ -14,7 +14,7 @@ extension MiniLock
 {
     /// This is a base class that contains the common entities of Encryptor and Decryptor classes
     /// It doesn't provide any functionalities.
-    class StreamCryptoBase {
+    public class StreamCryptoBase {
         struct CryptoBoxSizes {
             static let CipherTextPadding = crypto_secretbox_boxzerobytes()
             static let MessagePadding = crypto_secretbox_zerobytes()
@@ -32,36 +32,36 @@ extension MiniLock
             case macVerificationFailed
         }
         
-        enum ProcessStatus {
+        public enum ProcessStatus {
             case incomplete, succeeded, failed
         }
         
         var _processStatus: ProcessStatus = .incomplete
-        var processStatus: ProcessStatus {
+        public var processStatus: ProcessStatus {
             return _processStatus
         }
         
         var messageBuffer =  [UInt8](repeating: 0, count: CryptoBoxSizes.MessagePadding
-            + MiniLock.FileFormat.PlainTextBlockMaxBytes)
+                                                        + MiniLock.FileFormat.PlainTextBlockMaxBytes)
         
         var cipherBuffer = [UInt8](repeating: 0, count: CryptoBoxSizes.CipherTextPadding
-            + MiniLock.FileFormat.BlockSizeTagLength
-            + MiniLock.FileFormat.PlainTextBlockMaxBytes
-            + CryptoBoxSizes.MAC)
+                                                        + MiniLock.FileFormat.BlockSizeTagLength
+                                                        + MiniLock.FileFormat.PlainTextBlockMaxBytes
+                                                        + CryptoBoxSizes.MAC)
         
         var fullNonce: [UInt8]
         
-        open var fileNonce: [UInt8] {
+        public var fileNonce: [UInt8] {
             return Array(fullNonce[0..<MiniLock.FileFormat.FileNonceBytes])
         }
         
         var blake2SState = blake2s_state()
         var _cipherTextHash = [UInt8](repeating: 0, count: StreamCryptoBase.Blake2sOutputLength)
-        open var cipherTextHash: [UInt8] {
+        public var cipherTextHash: [UInt8] {
             return _cipherTextHash
         }
         
-        open let key: [UInt8]
+        public let key: [UInt8]
         
         
         init(key: [UInt8], fileNonce: [UInt8]) throws {
@@ -88,30 +88,6 @@ extension MiniLock
                     break
                 }
             }
-        }
-    }
-}
-
-extension Array {
-    /// Copies all elements of "array" to self, starting from "index"
-    ///
-    /// - Parameters:
-    ///   - array: Array of elements to copy from
-    ///   - index: index of self to start copying from
-    mutating func overwrite(with array: [Element], atIndex index: Int) {
-        overwrite(with: ArraySlice(array), atIndex: index)
-    }
-    
-    
-    /// Copies all elements of "slice" to self, starting from "index"
-    ///
-    /// - Parameters:
-    ///   - slice: ArraySlice of elements to copy from
-    ///   - index: index of self to start copying from
-    mutating func overwrite(with slice: ArraySlice<Element>, atIndex index: Int) {
-        let sliceStart = slice.startIndex
-        for i in 0..<slice.count {
-            self[index + i] = slice[sliceStart + i]
         }
     }
 }

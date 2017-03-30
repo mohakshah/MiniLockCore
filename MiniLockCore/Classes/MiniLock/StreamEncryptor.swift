@@ -15,7 +15,7 @@ extension MiniLock
     public class StreamEncryptor: StreamCryptoBase
     {
         /// Initialize with a random encryption key and nonce
-        convenience init() {
+        public convenience init() {
             // create a random fileKey
             let fileKey = [UInt8](repeating: 0, count: CryptoBoxSizes.SecretKey)
             randombytes_buf(UnsafeMutableRawPointer(mutating: fileKey), CryptoBoxSizes.SecretKey)
@@ -28,7 +28,7 @@ extension MiniLock
         ///
         /// - Parameter key: encryptionkey to use
         /// - Throws: throws if size of key is invalid
-        convenience init(key: [UInt8]) throws {
+        public convenience init(key: [UInt8]) throws {
             // create a random file nonce
             let fileNonce = [UInt8](repeating: 0, count: MiniLock.FileFormat.FileNonceBytes)
             randombytes_buf(UnsafeMutableRawPointer(mutating: fileNonce), fileNonce.count)
@@ -46,7 +46,7 @@ extension MiniLock
         ///   - isLastBlock: set to true if this is the last block
         /// - Returns: (cipher text + mac) is returned in form of [UInt8]
         /// - Throws: MiniLockStreamCryptor.CryptoError
-        func encrypt(block: [UInt8], isLastBlock: Bool) throws -> [UInt8] {
+        public func encrypt(block: [UInt8], isLastBlock: Bool) throws -> [UInt8] {
             if processStatus != .incomplete  {
                 throw CryptoError.processComplete
             }

@@ -12,65 +12,54 @@ import libb2s
 
 extension MiniLock
 {
+    struct KeySizes {
+        static let PublicKeyCheckSum = 1
+        static let PublicKey = crypto_box_publickeybytes()
+        static let PrivateKey = crypto_box_secretkeybytes()
+    }
+    
     public struct KeyPair
     {
-        struct Sizes {
-            static let PublicKeyCheckSum = 1
-            static let PublicKey = crypto_box_publickeybytes()
-            static let PrivateKey = crypto_box_secretkeybytes()
-            
-            static let Blake2sOutput = 32
-        }
-        
         struct ScryptParameters {
             static let N: UInt64 = UInt64(pow(2.0, 17.0))
             static let R: UInt32 = 8
             static let P: UInt32 = 1
-            static let OutputLength = Sizes.PrivateKey
+            static let OutputLength = KeySizes.PrivateKey
         }
         
-        let privateKey, publicKey: [UInt8]
+        static let Blake2SOutputLength = 32
         
-        // base58 encoded public key for sharing purposes
-        let printablePublicKey: String
+        public let privateKey: [UInt8]
+        public let publicId: MiniLock.Id
         
         /// Initializes a keypair from an existing private key
         ///
-        /// - Returns: fails if privatekey length != Sizes.PrivateKey
-        init?(fromPrivateKey privateKey: [UInt8]) {
-            if privateKey.count != Sizes.PrivateKey {
+        /// - Returns: fails if privatekey length != KeySizes.PrivateKey
+        public init?(fromPrivateKey privateKey: [UInt8]) {
+            if privateKey.count != KeySizes.PrivateKey {
                 return nil
             }
             
             // derive the public key from the private key
-            let publicKey = [UInt8](repeating: 0, count: Sizes.PublicKey + Sizes.PublicKeyCheckSum)
+            let publicKey = [UInt8](repeating: 0, count: KeySizes.PublicKey + KeySizes.PublicKeyCheckSum)
             crypto_scalarmult_base(UnsafeMutablePointer(mutating: publicKey), privateKey)
-            
-            // append the checksum to the public key
-            blake2s(UnsafeMutablePointer(mutating: publicKey).advanced(by: Sizes.PublicKey),
-                    publicKey,
-                    nil,
-                    Sizes.PublicKeyCheckSum,
-                    Sizes.PublicKey,
-                    0)
-            
-            self.publicKey = [UInt8](UnsafeBufferPointer(start: publicKey, count: Sizes.PublicKey + Sizes.PublicKeyCheckSum))
+
+            self.publicId = Id(fromBinaryPublicKey: publicKey)!
             self.privateKey = privateKey
-            printablePublicKey = Base58.encode(bytes: self.publicKey)
         }
         
         /// Initializes a keypair using a user's email id and password
         ///
         /// - Returns: initialization can fail if scrypt algorithm fails
-        init?(fromEmail email: String, andPassword password: String) {
+        public init?(fromEmail email: String, andPassword password: String) {
             // hash the password using blake2s
             let blake2sInput = [UInt8](password.utf8)
-            let blake2sOutput = [UInt8](repeating: 0, count: Sizes.Blake2sOutput)
+            let blake2sOutput = [UInt8](repeating: 0, count: KeyPair.Blake2SOutputLength)
             
             blake2s(UnsafeMutablePointer(mutating: blake2sOutput),
                     blake2sInput,
                     nil,
-                    Sizes.Blake2sOutput,
+                    blake2sOutput.count,
                     blake2sInput.count,
                     0)
             
@@ -78,7 +67,7 @@ extension MiniLock
             let scryptSalt: [UInt8] = Array(email.utf8)
             let scryptOutput = [UInt8](repeating: 0, count: ScryptParameters.OutputLength)
             let ret = crypto_pwhash_scryptsalsa208sha256_ll(blake2sOutput,
-                                                            Sizes.Blake2sOutput,
+                                                            KeyPair.Blake2SOutputLength,
                                                             scryptSalt,
                                                             scryptSalt.count,
                                                             ScryptParameters.N,
@@ -96,31 +85,6 @@ extension MiniLock
                                                                 count: ScryptParameters.OutputLength))
             self.init(fromPrivateKey: privateKey)
         }
-        
-        
-        /// Decodes a base58 encoded public key and verifies its checksum
-        ///
-        /// - Parameter b58String: base58 encoded public key
-        /// - Returns: [UInt8] containing raw bits of the key on success or nil on failure.
-        func decodePublicKey(fromBase58String b58String: String) -> [UInt8]? {
-            guard let binary = Base58.decode(b58String),
-                binary.count == (Sizes.PublicKey + Sizes.PublicKeyCheckSum) else {
-                    return nil
-            }
-            
-            let hash = [UInt8](repeating: 0, count: Sizes.PublicKeyCheckSum)
-            
-            blake2s(UnsafeMutablePointer(mutating: hash), binary, nil, Sizes.PublicKeyCheckSum, Sizes.PublicKey, 0)
-            
-            // compare the newly calculated hash with the one stored
-            for i in 0..<hash.count {
-                if hash[i] != binary[Sizes.PublicKey + i] {
-                    return nil
-                }
-            }
-            
-            
-            return binary
-        }
     }
+    
 }
