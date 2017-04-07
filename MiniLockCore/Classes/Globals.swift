@@ -31,3 +31,16 @@ extension Array {
         }
     }
 }
+
+// TODO: replace with mkstemp
+func getTempFile() -> URL {
+    var filePath: URL
+    var exists: Bool
+
+    repeat {
+        filePath = URL(string: "file://" + NSTemporaryDirectory())!.appendingPathComponent(UUID().uuidString, isDirectory: false)
+        exists = FileManager.default.fileExists(atPath: filePath.absoluteString)
+    } while (exists)
+
+    return filePath
+}

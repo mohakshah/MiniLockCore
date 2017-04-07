@@ -15,3 +15,18 @@ public class MiniLock
 
     
 }
+
+public protocol MiniLockProcessDelegate: class {
+    
+    /// Implement this function to get updates on a MiniLock process
+    /// such as file encryption/decryption
+    ///
+    /// - Parameters:
+    ///   - progress: values in the range [0.0, 1.0]
+    ///   - process: the process calling the funcion
+    func setProgress(to progress: Double, process: MiniLockProcess)
+}
+
+public protocol MiniLockProcess {
+    var processDelegate: MiniLockProcessDelegate? { get set }
+}

@@ -27,8 +27,8 @@ extension MiniLock
                 throw CryptoError.processComplete
             }
 
-            guard block.count > (CryptoBoxSizes.MAC + MiniLock.FileFormat.BlockSizeTagLength),
-                block.count <= (MiniLock.FileFormat.BlockSizeTagLength + MiniLock.FileFormat.PlainTextBlockMaxBytes + CryptoBoxSizes.MAC) else {
+            guard block.count > (CryptoSecretBoxSizes.MAC + MiniLock.FileFormat.BlockSizeTagLength),
+                block.count <= (MiniLock.FileFormat.BlockSizeTagLength + MiniLock.FileFormat.PlainTextBlockMaxBytes + CryptoSecretBoxSizes.MAC) else {
                     throw CryptoError.inputSizeInvalid
             }
 
@@ -38,7 +38,7 @@ extension MiniLock
                 messageSize |= Int(block[i]) << (8 * i)
             }
 
-            guard (messageSize + MiniLock.FileFormat.BlockSizeTagLength + CryptoBoxSizes.MAC) == block.count else {
+            guard (messageSize + MiniLock.FileFormat.BlockSizeTagLength + CryptoSecretBoxSizes.MAC) == block.count else {
                 throw CryptoError.inputSizeInvalid
             }
 
@@ -60,7 +60,7 @@ extension MiniLock
             }
 
             // attempt to decrypt cipher text
-            cipherBuffer.overwrite(with: block[MiniLock.FileFormat.BlockSizeTagLength..<block.count], atIndex: CryptoBoxSizes.CipherTextPadding)
+            cipherBuffer.overwrite(with: block[MiniLock.FileFormat.BlockSizeTagLength..<block.count], atIndex: CryptoSecretBoxSizes.CipherTextPadding)
 
             let returnValue = crypto_secretbox_open(UnsafeMutablePointer(mutating: messageBuffer),
                                   cipherBuffer,
@@ -82,7 +82,7 @@ extension MiniLock
             }
 
             // decryption succeeded!
-            return Array(messageBuffer[CryptoBoxSizes.MessagePadding..<(CryptoBoxSizes.MessagePadding + messageSize)])
+            return Array(messageBuffer[CryptoSecretBoxSizes.MessagePadding..<(CryptoSecretBoxSizes.MessagePadding + messageSize)])
         }
     }
 }

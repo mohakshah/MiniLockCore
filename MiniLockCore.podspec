@@ -33,4 +33,5 @@ TODO: Add long description of the pod here.
   s.dependency 'libsodium', '~> 1.0'
   s.dependency 'libb2s', '~> 1.0'
   s.dependency 'libbase58', '~> 0.1'
+  s.dependency 'ObjectMapper', '~> 2.2'
 end

@@ -17,8 +17,8 @@ extension MiniLock
         /// Initialize with a random encryption key and nonce
         public convenience init() {
             // create a random fileKey
-            let fileKey = [UInt8](repeating: 0, count: CryptoBoxSizes.SecretKey)
-            randombytes_buf(UnsafeMutableRawPointer(mutating: fileKey), CryptoBoxSizes.SecretKey)
+            let fileKey = [UInt8](repeating: 0, count: CryptoSecretBoxSizes.SecretKey)
+            randombytes_buf(UnsafeMutableRawPointer(mutating: fileKey), CryptoSecretBoxSizes.SecretKey)
 
             // no need to throw since use has not provided any input
             try! self.init(key: fileKey)
@@ -64,18 +64,19 @@ extension MiniLock
             }
 
             // write block to message buffer
-            messageBuffer.overwrite(with: block, atIndex: CryptoBoxSizes.MessagePadding)
+            messageBuffer.overwrite(with: block, atIndex: CryptoSecretBoxSizes.MessagePadding)
 
             // encrypt the message and extract the cipherText from cipherBuffer
             crypto_secretbox(UnsafeMutablePointer(mutating: cipherBuffer).advanced(by: MiniLock.FileFormat.BlockSizeTagLength),
                              messageBuffer,
-                             UInt64(block.count),
+                             UInt64(block.count + CryptoSecretBoxSizes.MessagePadding),
                              fullNonce,
                              key)
-            var cipherText = Array(cipherBuffer[CryptoBoxSizes.CipherTextPadding..<(CryptoBoxSizes.CipherTextPadding
+
+            var cipherText = Array(cipherBuffer[CryptoSecretBoxSizes.CipherTextPadding..<(CryptoSecretBoxSizes.CipherTextPadding
                                                                                     + MiniLock.FileFormat.BlockSizeTagLength
                                                                                     + block.count
-                                                                                    + CryptoBoxSizes.MAC )])
+                                                                                    + CryptoSecretBoxSizes.MAC )])
 
             incrementNonce()
 

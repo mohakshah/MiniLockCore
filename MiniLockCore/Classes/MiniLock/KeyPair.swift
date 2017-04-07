@@ -41,7 +41,7 @@ extension MiniLock
             }
             
             // derive the public key from the private key
-            let publicKey = [UInt8](repeating: 0, count: KeySizes.PublicKey + KeySizes.PublicKeyCheckSum)
+            let publicKey = [UInt8](repeating: 0, count: KeySizes.PublicKey)
             crypto_scalarmult_base(UnsafeMutablePointer(mutating: publicKey), privateKey)
 
             self.publicId = Id(fromBinaryPublicKey: publicKey)!
@@ -62,6 +62,8 @@ extension MiniLock
                     blake2sOutput.count,
                     blake2sInput.count,
                     0)
+            
+            // TODO: zero out blake2sInput
             
             // hash the result of the previous hash using scrypt with the email as the salt
             let scryptSalt: [UInt8] = Array(email.utf8)

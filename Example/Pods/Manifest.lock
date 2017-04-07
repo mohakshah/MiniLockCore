@@ -6,7 +6,9 @@ PODS:
     - libb2s (~> 1.0)
     - libbase58 (~> 0.1)
     - libsodium (~> 1.0)
+    - ObjectMapper (~> 2.2)
   - Nimble (5.1.1)
+  - ObjectMapper (2.2.5)
   - Quick (1.0.0)
 
 DEPENDENCIES:
@@ -22,8 +24,9 @@ SPEC CHECKSUMS:
   libb2s: becf51d56fef21f4e7892821bc2eb0baf87af0ab
   libbase58: 7c040313537b8c44b6e2d15586af8e21f7354efd
   libsodium: 9aba161d2ee096977ecbdcce1ada69ffe511970c
-  MiniLockCore: 9492e368158b969462eb4c2a836fa5d6aa5c56a7
+  MiniLockCore: 768adf0c14583bec199e8954cd76e4bf00ade895
   Nimble: 415e3aa3267e7bc2c96b05fa814ddea7bb686a29
+  ObjectMapper: fb30f71e08470d1e5a20b199fafe1246281db898
   Quick: 8024e4a47e6cc03a9d5245ef0948264fc6d27cff
 
 PODFILE CHECKSUM: ad2da049f17f329304f2d4c93df7d9319fedf5c4

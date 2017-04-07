@@ -1,6 +1,6 @@
 //
 //  Id.swift
-//  Pods
+//  MiniLockCore
 //
 //  Created by Mohak Shah on 26/03/17.
 //
@@ -39,7 +39,7 @@ extension MiniLock
                     0)
             
             self.binary = binary + checkSum
-            self.description = Base58.encode(bytes: binary)
+            self.description = Base58.encode(bytes: self.binary)
         }
         
         

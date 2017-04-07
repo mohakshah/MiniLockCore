@@ -15,7 +15,7 @@ extension MiniLock
     /// This is a base class that contains the common entities of Encryptor and Decryptor classes
     /// It doesn't provide any functionalities.
     public class StreamCryptoBase {
-        struct CryptoBoxSizes {
+        struct CryptoSecretBoxSizes {
             static let CipherTextPadding = crypto_secretbox_boxzerobytes()
             static let MessagePadding = crypto_secretbox_zerobytes()
             static let MAC = crypto_secretbox_macbytes()
@@ -41,13 +41,13 @@ extension MiniLock
             return _processStatus
         }
         
-        var messageBuffer =  [UInt8](repeating: 0, count: CryptoBoxSizes.MessagePadding
+        var messageBuffer =  [UInt8](repeating: 0, count: CryptoSecretBoxSizes.MessagePadding
                                                         + MiniLock.FileFormat.PlainTextBlockMaxBytes)
         
-        var cipherBuffer = [UInt8](repeating: 0, count: CryptoBoxSizes.CipherTextPadding
+        var cipherBuffer = [UInt8](repeating: 0, count: CryptoSecretBoxSizes.CipherTextPadding
                                                         + MiniLock.FileFormat.BlockSizeTagLength
                                                         + MiniLock.FileFormat.PlainTextBlockMaxBytes
-                                                        + CryptoBoxSizes.MAC)
+                                                        + CryptoSecretBoxSizes.MAC)
         
         var fullNonce: [UInt8]
         
@@ -65,13 +65,13 @@ extension MiniLock
         
         
         init(key: [UInt8], fileNonce: [UInt8]) throws {
-            guard key.count == CryptoBoxSizes.SecretKey,
+            guard key.count == CryptoSecretBoxSizes.SecretKey,
                 fileNonce.count == MiniLock.FileFormat.FileNonceBytes else {
                     throw CryptoError.inputSizeInvalid
             }
             
             self.key = key
-            fullNonce = fileNonce + [UInt8](repeating: 0, count: CryptoBoxSizes.Nonce - MiniLock.FileFormat.FileNonceBytes)
+            fullNonce = fileNonce + [UInt8](repeating: 0, count: CryptoSecretBoxSizes.Nonce - MiniLock.FileFormat.FileNonceBytes)
             
             // init blake2s stream hashing
             _ = withUnsafeMutablePointer(to: &blake2SState) { (statePointer) in
@@ -80,7 +80,7 @@ extension MiniLock
         }
         
         func incrementNonce() {
-            for i in MiniLock.FileFormat.FileNonceBytes..<CryptoBoxSizes.Nonce {
+            for i in MiniLock.FileFormat.FileNonceBytes..<CryptoSecretBoxSizes.Nonce {
                 fullNonce[i] = fullNonce[i] &+ 1
                 
                 // byte did not wrap around
