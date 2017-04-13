@@ -12,8 +12,14 @@ import libb2s
 
 extension MiniLock
 {
-    public class StreamEncryptor: StreamCryptoBase
+    public final class StreamEncryptor: StreamCryptoBase
     {
+        private let messagePadding = [UInt8](repeating: 0, count: CryptoSecretBoxSizes.MessagePadding)
+        private var cipherBuffer = [UInt8](repeating: 0, count: CryptoSecretBoxSizes.CipherTextPadding
+                                                                + MiniLock.FileFormat.BlockSizeTagLength
+                                                                + MiniLock.FileFormat.PlainTextBlockMaxBytes
+                                                                + CryptoSecretBoxSizes.MAC)
+
         /// Initialize with a random encryption key and nonce
         public convenience init() {
             // create a random fileKey
@@ -37,7 +43,6 @@ extension MiniLock
             try self.init(key: key, fileNonce: fileNonce)
         }
 
-
         /// Encrypts block with the key and nonce that the object was initalized with.
         /// The cipher text is preceded by block length tag and followed by the MAC
         ///
@@ -46,13 +51,13 @@ extension MiniLock
         ///   - isLastBlock: set to true if this is the last block
         /// - Returns: (cipher text + mac) is returned in form of [UInt8]
         /// - Throws: MiniLockStreamCryptor.CryptoError
-        public func encrypt(block: [UInt8], isLastBlock: Bool) throws -> [UInt8] {
+        public func encrypt(messageBlock: Data, isLastBlock: Bool) throws -> Data {
             if processStatus != .incomplete  {
                 throw CryptoError.processComplete
             }
 
-            guard block.count > 0,
-                block.count <= MiniLock.FileFormat.PlainTextBlockMaxBytes else {
+            guard messageBlock.count > 0,
+                messageBlock.count <= MiniLock.FileFormat.PlainTextBlockMaxBytes else {
                     throw CryptoError.inputSizeInvalid
             }
 
@@ -63,32 +68,34 @@ extension MiniLock
                 _processStatus = .succeeded
             }
 
-            // write block to message buffer
-            messageBuffer.overwrite(with: block, atIndex: CryptoSecretBoxSizes.MessagePadding)
+            // add padding to block
+            let paddedMessage = messagePadding + messageBlock
 
             // encrypt the message and extract the cipherText from cipherBuffer
             crypto_secretbox(UnsafeMutablePointer(mutating: cipherBuffer).advanced(by: MiniLock.FileFormat.BlockSizeTagLength),
-                             messageBuffer,
-                             UInt64(block.count + CryptoSecretBoxSizes.MessagePadding),
+                             paddedMessage,
+                             UInt64(paddedMessage.count),
                              fullNonce,
                              key)
 
-            var cipherText = Array(cipherBuffer[CryptoSecretBoxSizes.CipherTextPadding..<(CryptoSecretBoxSizes.CipherTextPadding
-                                                                                    + MiniLock.FileFormat.BlockSizeTagLength
-                                                                                    + block.count
-                                                                                    + CryptoSecretBoxSizes.MAC )])
-
             incrementNonce()
+            
+            var cipherText = Data(bytesNoCopy: UnsafeMutablePointer(mutating: cipherBuffer).advanced(by: CryptoSecretBoxSizes.CipherTextPadding),
+                                  count: MiniLock.FileFormat.BlockSizeTagLength + messageBlock.count + CryptoSecretBoxSizes.MAC,
+                                  deallocator: .none)
 
             // set the block length tag
             for i in 0..<MiniLock.FileFormat.BlockSizeTagLength {
-                cipherText[i] = UInt8((block.count >> (8 * i)) & 0xff)
+                cipherText[i] = UInt8((messageBlock.count >> (8 * i)) & 0xff)
             }
 
             // update blake2s
-            _ = withUnsafeMutablePointer(to: &blake2SState) { (statePointer) in
-                blake2s_update(statePointer, cipherText, cipherText.count)
+            cipherText.withUnsafeBytes { (cipherTextBytesPointer) in
+                _ = withUnsafeMutablePointer(to: &blake2SState) { (statePointer) in
+                    blake2s_update(statePointer, cipherTextBytesPointer, cipherText.count)
+                }
             }
+            
 
             if isLastBlock {
                 // finalize and extract the hash

@@ -41,14 +41,6 @@ extension MiniLock
             return _processStatus
         }
         
-        var messageBuffer =  [UInt8](repeating: 0, count: CryptoSecretBoxSizes.MessagePadding
-                                                        + MiniLock.FileFormat.PlainTextBlockMaxBytes)
-        
-        var cipherBuffer = [UInt8](repeating: 0, count: CryptoSecretBoxSizes.CipherTextPadding
-                                                        + MiniLock.FileFormat.BlockSizeTagLength
-                                                        + MiniLock.FileFormat.PlainTextBlockMaxBytes
-                                                        + CryptoSecretBoxSizes.MAC)
-        
         var fullNonce: [UInt8]
         
         public var fileNonce: [UInt8] {

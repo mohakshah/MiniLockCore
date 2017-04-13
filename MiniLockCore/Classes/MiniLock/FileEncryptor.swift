@@ -1,3 +1,4 @@
+
 //
 //  FileEncryptor.swift
 //  MiniLockCore
@@ -16,7 +17,7 @@ extension MiniLock {
         let sender: MiniLock.KeyPair
         let recipients: [MiniLock.Id]
         
-        let paddedFileName: [UInt8]
+        let paddedFileName: Data
         let fileSize: Double
         
         var bytesEncrypted: Int = 0 {
@@ -47,12 +48,11 @@ extension MiniLock {
             
             self.paddedFileName = FileEncryptor.paddedFileName(fromFileURL: url)
             
-            
             self.fileSize = Double((try FileManager.default.attributesOfItem(atPath: self.fileURL.path))[FileAttributeKey.size] as! UInt64)
         }
         
         public func encrypt(destinationFileURL destination: URL, deleteSourceFile: Bool) throws {
-            if !destination.isFileURL {
+            guard destination.isFileURL else {
                 throw Errors.NotAFileURL
             }
             
@@ -78,7 +78,6 @@ extension MiniLock {
             }
 
             // open the source file for reading
-            
             let sourceHandle = try FileHandle(forReadingFrom: fileURL)
             defer {
                 sourceHandle.closeFile()
@@ -99,7 +98,7 @@ extension MiniLock {
                 throw Errors.CouldNotCreateFile
             }
 
-            // open temp file for writing
+            // open that temp file for writing
             var payloadHandle: FileHandle
             do {
                 payloadHandle = try FileHandle(forWritingTo: encryptedPayloadURL)
@@ -126,26 +125,29 @@ extension MiniLock {
             
             // write symmetrically encrypted payload to payloadHandle
             let encryptor = StreamEncryptor()
-            let encryptedBlock = try encryptor.encrypt(block: paddedFileName, isLastBlock: false)
+            let encryptedBlock = try encryptor.encrypt(messageBlock: paddedFileName, isLastBlock: false)
 
-            payloadHandle.write(Data(encryptedBlock))
+            payloadHandle.write(encryptedBlock)
 
             var currentBlock = sourceHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
             if currentBlock.isEmpty {
                 throw Errors.SourceFileEmpty
             }
-
-            var nextBlock = sourceHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
             
             while !currentBlock.isEmpty {
-                let encryptedBlock = try encryptor.encrypt(block: Array(currentBlock), isLastBlock: nextBlock.isEmpty)
-                payloadHandle.write(Data(encryptedBlock))
-                
-                bytesEncrypted += currentBlock.count
+                try autoreleasepool {
+                    let nextBlock = sourceHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
+                    let encryptedBlock = try encryptor.encrypt(messageBlock: currentBlock, isLastBlock: nextBlock.isEmpty)
 
-                currentBlock = nextBlock
-                nextBlock = sourceHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
+                    payloadHandle.write(encryptedBlock)
+                    
+                    bytesEncrypted += currentBlock.count
+                    
+                    currentBlock = nextBlock
+                }
             }
+            
+            sourceHandle.closeFile()
             
             // delete source file
             if deleteSourceFile {
@@ -190,14 +192,16 @@ extension MiniLock {
             currentBlock = payloadHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
             
             while !currentBlock.isEmpty {
-                destinationHandle.write(currentBlock)
-                currentBlock = payloadHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
+                autoreleasepool {
+                    destinationHandle.write(currentBlock)
+                    currentBlock = payloadHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
+                }
             }
             
             encryptedSuccessfully = true
         }
         
-        class func paddedFileName(fromFileURL url: URL) -> [UInt8] {
+        class func paddedFileName(fromFileURL url: URL) -> Data {
             var filename = [UInt8](url.lastPathComponent.utf8)
             
             if filename.count > FileFormat.FileNameMaxLength {
@@ -208,7 +212,7 @@ extension MiniLock {
             // pad to fit FileFormat.FileNameMaxLength bytes
             filename += [UInt8](repeating: 0, count: FileFormat.FileNameMaxLength - filename.count + 1)
             
-            return filename
+            return Data(filename)
         }
     }
 }

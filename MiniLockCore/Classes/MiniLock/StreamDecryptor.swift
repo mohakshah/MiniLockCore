@@ -11,8 +11,10 @@ import libb2s
 
 extension MiniLock
 {
-    public class StreamDecryptor: StreamCryptoBase
+    public final class StreamDecryptor: StreamCryptoBase
     {
+        private let cipherPadding = [UInt8](repeating: 0, count: CryptoSecretBoxSizes.CipherTextPadding)
+        private var messageBuffer =  [UInt8](repeating: 0, count: CryptoSecretBoxSizes.MessagePadding + MiniLock.FileFormat.PlainTextBlockMaxBytes)
 
         /// Decrypts the given block with the key and nonce that the object was initialized with
         ///
@@ -21,31 +23,34 @@ extension MiniLock
         ///   - isLastBlock: set to true if this is the last blcok
         /// - Returns: the decrypted plain text
         /// - Throws: StreamCryptoBase.CryptoError
-        public func decrypt(block: [UInt8], isLastBlock: Bool) throws -> [UInt8] {
+        public func decrypt(cipherBlock: Data, isLastBlock: Bool) throws -> Data {
             // perform sanity checks
             if processStatus != .incomplete {
                 throw CryptoError.processComplete
             }
 
-            guard block.count > (CryptoSecretBoxSizes.MAC + MiniLock.FileFormat.BlockSizeTagLength),
-                block.count <= (MiniLock.FileFormat.BlockSizeTagLength + MiniLock.FileFormat.PlainTextBlockMaxBytes + CryptoSecretBoxSizes.MAC) else {
+            guard cipherBlock.count > (CryptoSecretBoxSizes.MAC + MiniLock.FileFormat.BlockSizeTagLength),
+                cipherBlock.count <= (MiniLock.FileFormat.BlockSizeTagLength + MiniLock.FileFormat.PlainTextBlockMaxBytes + CryptoSecretBoxSizes.MAC) else {
                     throw CryptoError.inputSizeInvalid
             }
 
             // extract plain text message size and validate size of block against it
             var messageSize = 0
             for i in 0..<MiniLock.FileFormat.BlockSizeTagLength {
-                messageSize |= Int(block[i]) << (8 * i)
+                messageSize |= Int(cipherBlock[i]) << (8 * i)
             }
 
-            guard (messageSize + MiniLock.FileFormat.BlockSizeTagLength + CryptoSecretBoxSizes.MAC) == block.count else {
+            guard (messageSize + MiniLock.FileFormat.BlockSizeTagLength + CryptoSecretBoxSizes.MAC) == cipherBlock.count else {
                 throw CryptoError.inputSizeInvalid
             }
 
             // calculate the hash of cipherblock
-            _ = withUnsafeMutablePointer(to: &blake2SState) { (statePointer) in
-                blake2s_update(statePointer, block, block.count)
+            cipherBlock.withUnsafeBytes { (cipherBlockPointer) in
+                _ = withUnsafeMutablePointer(to: &blake2SState) { (statePointer) in
+                    blake2s_update(statePointer, cipherBlockPointer, cipherBlock.count)
+                }
             }
+            
 
             if isLastBlock {
                 // set MSB of the block counter
@@ -60,13 +65,12 @@ extension MiniLock
             }
 
             // attempt to decrypt cipher text
-            cipherBuffer.overwrite(with: block[MiniLock.FileFormat.BlockSizeTagLength..<block.count], atIndex: CryptoSecretBoxSizes.CipherTextPadding)
-
+            let paddedCipherBlock = cipherPadding + cipherBlock
             let returnValue = crypto_secretbox_open(UnsafeMutablePointer(mutating: messageBuffer),
-                                  cipherBuffer,
-                                  UInt64(block.count),
-                                  fullNonce,
-                                  key)
+                                                      paddedCipherBlock,
+                                                      UInt64(cipherBlock.count),
+                                                      fullNonce,
+                                                      key)
 
             incrementNonce()
 
@@ -82,7 +86,9 @@ extension MiniLock
             }
 
             // decryption succeeded!
-            return Array(messageBuffer[CryptoSecretBoxSizes.MessagePadding..<(CryptoSecretBoxSizes.MessagePadding + messageSize)])
+            return Data(bytesNoCopy: UnsafeMutablePointer(mutating: messageBuffer).advanced(by: CryptoSecretBoxSizes.MessagePadding),
+                        count: messageSize,
+                        deallocator: .none)
         }
     }
 }
