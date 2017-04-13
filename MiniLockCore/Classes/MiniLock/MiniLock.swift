@@ -12,7 +12,30 @@ import libb2s
 
 public class MiniLock
 {
+    public enum Errors: Error {
+        case RecepientListEmpty
+        case NotAFileURL
+        case FileNameEmpty
+        case CouldNotCreateFile
+        case SourceFileEmpty
+        case CouldNotConstructHeader
+    }
 
+    public class func isEncryptedFile(url: URL) throws -> Bool {
+        guard url.isFileURL else {
+            throw Errors.NotAFileURL
+        }
+        
+        let readHandle = try FileHandle(forReadingFrom: url)
+        
+        let fileBytes = [UInt8](readHandle.readData(ofLength: FileFormat.MagicBytes.count))
+        
+        if fileBytes == FileFormat.MagicBytes {
+            return true
+        }
+        
+        return false
+    }
     
 }
 

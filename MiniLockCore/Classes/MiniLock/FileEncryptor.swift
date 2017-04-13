@@ -11,14 +11,6 @@ import libsodium
 
 extension MiniLock {
     public class FileEncryptor: MiniLockProcess {
-        public enum Errors: Error {
-            case RecepientListEmpty
-            case NotAFileURL
-            case FileNameEmpty
-            case CouldNotCreateFile
-            case SourceFileEmpty
-            case CouldNotConstructHeader
-        }
 
         let fileURL: URL
         let sender: MiniLock.KeyPair
