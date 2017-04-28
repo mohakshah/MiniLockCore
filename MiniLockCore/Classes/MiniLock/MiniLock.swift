@@ -19,6 +19,11 @@ public class MiniLock
         case CouldNotCreateFile
         case SourceFileEmpty
         case CouldNotConstructHeader
+        case NotAMiniLockFile
+        case CorruptMiniLockFile
+        case NotARecipient
+        case CouldNotDecodeFileName
+        case HeaderParsingError
     }
 
     public class func isEncryptedFile(url: URL) throws -> Bool {
@@ -26,17 +31,19 @@ public class MiniLock
             throw Errors.NotAFileURL
         }
         
+        // read magic bytes from the file
         let readHandle = try FileHandle(forReadingFrom: url)
-        
         let fileBytes = [UInt8](readHandle.readData(ofLength: FileFormat.MagicBytes.count))
+
+        readHandle.closeFile()
         
+        // compare to minilock's magic bytes
         if fileBytes == FileFormat.MagicBytes {
             return true
         }
         
         return false
     }
-    
 }
 
 public protocol MiniLockProcessDelegate: class {

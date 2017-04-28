@@ -19,16 +19,11 @@ extension MiniLock {
     }
 
     struct Header: ImmutableMappable {
-        
-        enum Errors: Error {
-            case ParsingError
-        }
-
         let version: Int
         let ephemeralPublicKey: String
         let decryptInfo: [String: String]
         
-        init?(sender: MiniLock.KeyPair, recipients: [MiniLock.Id], fileInfo: FileInfo) {
+        init?(sender: MiniLock.KeyPair, recipients: [MiniLock.Id], fileInfo: FileInfo) {            
             guard !recipients.isEmpty else {
                 return nil
             }
@@ -114,6 +109,41 @@ extension MiniLock {
             ephemeralPublicKey 	>>> map["ephemeral"]
             decryptInfo         >>> map["decryptInfo"]
         }
+        
+        func decryptDecryptInfo(usingRecipientKeys recipientKeys: KeyPair) -> DecryptInfo? {
+            let epehemeralPublicKeyBinary = [UInt8](Data(base64Encoded: ephemeralPublicKey) ?? Data())
+            guard epehemeralPublicKeyBinary.count == CryptoBoxSizes.PublicKey else {
+                return nil
+            }
+
+            for (nonceString, cipherString) in decryptInfo {
+                let nonce = [UInt8](Data(base64Encoded: nonceString) ?? Data())
+                let cipher = [UInt8](Data(base64Encoded: cipherString) ?? Data())
+
+                guard nonce.count == CryptoBoxSizes.Nonce,
+                        cipher.count > CryptoBoxSizes.MAC else {
+                            continue
+                }
+                
+                let decipheredBytes = [UInt8](repeating: 0, count: cipher.count - CryptoBoxSizes.MAC)
+                
+                let ret = crypto_box_open_easy(UnsafeMutablePointer(mutating: decipheredBytes),
+                                               cipher,
+                                               UInt64(cipher.count),
+                                               nonce,
+                                               epehemeralPublicKeyBinary,
+                                               recipientKeys.privateKey)
+                
+                if ret == 0,
+                    let jsonString = String(bytes: decipheredBytes, encoding: .utf8),
+                    var ptDecryptInfo = try? DecryptInfo(JSONString: jsonString) {
+                        ptDecryptInfo.nonce = nonce
+                        return ptDecryptInfo
+                }
+            }
+            
+            return nil
+        }
     }
 }
 
@@ -121,6 +151,7 @@ extension MiniLock.Header {
     struct DecryptInfo: ImmutableMappable {
         let senderId, recipientId: MiniLock.Id
         let fileInfo: String
+        var nonce: [UInt8]?
         
         init(senderId: MiniLock.Id, recipientId: MiniLock.Id, fileInfo: String) {
             self.senderId = senderId
@@ -134,7 +165,7 @@ extension MiniLock.Header {
             
             guard let senderId = MiniLock.Id(fromBase58String: senderIdString),
                 let recipientId = MiniLock.Id(fromBase58String: recipientIdString) else {
-                    throw Errors.ParsingError
+                    throw MiniLock.Errors.HeaderParsingError
             }
             
             self.senderId = senderId
@@ -146,6 +177,37 @@ extension MiniLock.Header {
             senderId.base58String       >>> map["senderID"]
             recipientId.base58String    >>> map["recipientID"]
             fileInfo                    >>> map["fileInfo"]
+        }
+        
+        func decryptFileInfo(usingRecipientKeys recipientKeys: MiniLock.KeyPair) -> FileInfo? {
+            guard let nonce = nonce,
+                    nonce.count == MiniLock.CryptoBoxSizes.Nonce,
+                    recipientKeys.publicId == recipientId else {
+                return nil
+            }
+            
+            let cipherBytes = [UInt8](Data(base64Encoded: fileInfo) ?? Data())
+            
+            guard cipherBytes.count > MiniLock.CryptoBoxSizes.MAC else {
+                return nil
+            }
+            
+            let decipheredBytes = [UInt8](repeating: 0, count: cipherBytes.count - MiniLock.CryptoBoxSizes.MAC)
+            
+            let ret = crypto_box_open_easy(UnsafeMutablePointer(mutating: decipheredBytes),
+                                           cipherBytes,
+                                           UInt64(cipherBytes.count),
+                                           nonce,
+                                           senderId.binary,
+                                           recipientKeys.privateKey)
+            
+            if ret == 0,
+                let jsonString = String(bytes: decipheredBytes, encoding: .utf8),
+                let ptFileInfo = try? FileInfo(JSONString: jsonString) {
+                    return ptFileInfo
+            }
+            
+            return nil
         }
     }
 }

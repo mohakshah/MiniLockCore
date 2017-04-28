@@ -168,6 +168,7 @@
 		6D99DB9C1AB1BBC3BA02AB03551FF652 /* QuickSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 13CB3DAC8AFFB2E6363F74EEFA14B15A /* QuickSpec.m */; };
 		6E397D9FB11A47E48D70287D734B12B2 /* BeLessThan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E926997AB55FFA10E3BB1913A38CE6 /* BeLessThan.swift */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
 		70F3252B4EAFDF0E0B2A7EFABBFA2488 /* ladder_base.h in Headers */ = {isa = PBXBuildFile; fileRef = 1CCE5F36BF24F150B9AC537773F48DD0 /* ladder_base.h */; settings = {ATTRIBUTES = (Project, ); }; };
+		71AA59541EAA2280008436C0 /* FileDecryptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71AA59531EAA2280008436C0 /* FileDecryptor.swift */; };
 		71F7447117FE57ADDB4B657FDDBB5A0E /* randombytes_salsa20_random.h in Headers */ = {isa = PBXBuildFile; fileRef = D13C16713F52EC8EDE3A4BAE324AC806 /* randombytes_salsa20_random.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7212822ACA1BA68E18A3AECC857CB750 /* curve25519_donna_c64.c in Sources */ = {isa = PBXBuildFile; fileRef = E3FDB83C3F8C8CB1902BD385FBA043BB /* curve25519_donna_c64.c */; settings = {COMPILER_FLAGS = "-DNATIVE_LITTLE_ENDIAN=1 -DHAVE_MADVISE -DHAVE_MMAP -DHAVE_MPROTECT -DHAVE_POSIX_MEMALIGN -DHAVE_WEAK_SYMBOLS -fno-objc-arc"; }; };
 		725AD98652A16599353FAC79FA1BFC4C /* core_hchacha20.h in Headers */ = {isa = PBXBuildFile; fileRef = 3C8D7F2F0C6815D594B30C458A7F4A36 /* core_hchacha20.h */; settings = {ATTRIBUTES = (Project, ); }; };
@@ -673,6 +674,7 @@
 		704D5F89658BD978B1ED536AA93DD2F3 /* curve25519_ref10.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; name = curve25519_ref10.c; path = src/libsodium/crypto_core/curve25519/ref10/curve25519_ref10.c; sourceTree = "<group>"; };
 		705C9A27ECAC7ADCC3A36F213BF229E2 /* XCTestObservationCenter+Register.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = "XCTestObservationCenter+Register.m"; path = "Sources/NimbleObjectiveC/XCTestObservationCenter+Register.m"; sourceTree = "<group>"; };
 		70EE29BB41E31C49D7AD8D05346A20DD /* aead_aes256gcm_aesni.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; name = aead_aes256gcm_aesni.c; path = src/libsodium/crypto_aead/aes256gcm/aesni/aead_aes256gcm_aesni.c; sourceTree = "<group>"; };
+		71AA59531EAA2280008436C0 /* FileDecryptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileDecryptor.swift; sourceTree = "<group>"; };
 		72D0C59C92329EEDDD028B0141B6D363 /* TransformOf.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TransformOf.swift; path = Sources/TransformOf.swift; sourceTree = "<group>"; };
 		7346306E8142AC29F2D37BD609627993 /* World.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = World.swift; path = Sources/Quick/World.swift; sourceTree = "<group>"; };
 		73C13DB41EBA496CB0D27B18AC6B0C36 /* common.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = common.h; path = src/libsodium/crypto_stream/aes128ctr/portable/common.h; sourceTree = "<group>"; };
@@ -1099,6 +1101,7 @@
 				8FF74081D7AC2178D4D3EEE591EFD518 /* StreamDecryptor.swift */,
 				DFF1A5BFF3FA0E0F26E6EB6FC0D76D20 /* StreamEncryptor.swift */,
 				66372D07A3A566620B105B61E0A63D28 /* FileEncryptor.swift */,
+				71AA59531EAA2280008436C0 /* FileDecryptor.swift */,
 			);
 			path = MiniLock;
 			sourceTree = "<group>";
@@ -2234,6 +2237,7 @@
 				2A986FE2029C725186CA04063B48A0FC /* KeyPair.swift in Sources */,
 				99F0723354A33D15766194024871ECFA /* MiniLock.swift in Sources */,
 				24C91941258B7A61EAD867720F32E16F /* MiniLockCore-dummy.m in Sources */,
+				71AA59541EAA2280008436C0 /* FileDecryptor.swift in Sources */,
 				FB544866035D179F088786DF70713136 /* StreamCryptoBase.swift in Sources */,
 				A451074AC4F9863E507CCFFDDDCF5A47 /* StreamDecryptor.swift in Sources */,
 				00BD7C11C71E476716612C4727C7761B /* StreamEncryptor.swift in Sources */,

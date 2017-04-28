@@ -20,5 +20,7 @@ extension MiniLock {
         
         static let MagicBytes: [UInt8] = [0x6d, 0x69, 0x6e, 0x69, 0x4c, 0x6f, 0x63, 0x6b]
         static let HeaderBytesLength = 4
+        
+        static let FileExtension = ".miniLock"
     }
 }

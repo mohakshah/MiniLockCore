@@ -11,9 +11,9 @@ import Foundation
 import libsodium
 
 extension MiniLock {
-    public class FileEncryptor: MiniLockProcess {
+    public final class FileEncryptor: MiniLockProcess {
 
-        let fileURL: URL
+        let sourceFile: URL
         let sender: MiniLock.KeyPair
         let recipients: [MiniLock.Id]
         
@@ -37,7 +37,7 @@ extension MiniLock {
                 throw Errors.FileNameEmpty
             }
 
-            self.fileURL = url
+            self.sourceFile = url
             self.sender = sender
 
             if recipients.isEmpty {
@@ -48,13 +48,19 @@ extension MiniLock {
             
             self.paddedFileName = FileEncryptor.paddedFileName(fromFileURL: url)
             
-            self.fileSize = Double((try FileManager.default.attributesOfItem(atPath: self.fileURL.path))[FileAttributeKey.size] as! UInt64)
+            self.fileSize = Double((try FileManager.default.attributesOfItem(atPath: self.sourceFile.path))[FileAttributeKey.size] as! UInt64)
         }
         
         public func encrypt(destinationFileURL destination: URL, deleteSourceFile: Bool) throws {
-            guard destination.isFileURL else {
-                throw Errors.NotAFileURL
-            }
+            try self.encrypt(destinationDirectory: destination.deletingLastPathComponent(),
+                         filename: destination.lastPathComponent,
+                         deleteSourceFile: deleteSourceFile)
+        }
+        
+        public func encrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws {
+            // create destination file
+            let filename = suggestedFilename ?? sourceFile.appendingPathExtension(MiniLock.FileFormat.FileExtension).lastPathComponent
+            let destination = try createNewFile(inDirectory: destinationDirectory, withName: filename)
             
             var encryptedSuccessfully = false
             let fileManager = FileManager.default
@@ -78,12 +84,12 @@ extension MiniLock {
             }
 
             // open the source file for reading
-            let sourceHandle = try FileHandle(forReadingFrom: fileURL)
+            let sourceHandle = try FileHandle(forReadingFrom: sourceFile)
             defer {
                 sourceHandle.closeFile()
-                if deleteSourceFile && fileManager.fileExists(atPath: fileURL.absoluteString) {
+                if deleteSourceFile && fileManager.fileExists(atPath: sourceFile.absoluteString) {
                     do {
-                        try fileManager.removeItem(at: fileURL)
+                        try fileManager.removeItem(at: sourceFile)
                     } catch (let error) {
                         print("Error deleting the source file: ", error)
                     }
@@ -152,7 +158,7 @@ extension MiniLock {
             // delete source file
             if deleteSourceFile {
                 do {
-                    try fileManager.removeItem(at: fileURL)
+                    try fileManager.removeItem(at: sourceFile)
                 } catch (let error) {
                     print("Error deleting the source file: ", error)
                 }

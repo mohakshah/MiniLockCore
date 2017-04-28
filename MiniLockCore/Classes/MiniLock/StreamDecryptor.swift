@@ -65,10 +65,10 @@ extension MiniLock
             }
 
             // attempt to decrypt cipher text
-            let paddedCipherBlock = cipherPadding + cipherBlock
+            let paddedCipherBlock = cipherPadding + cipherBlock[MiniLock.FileFormat.BlockSizeTagLength..<cipherBlock.count]
             let returnValue = crypto_secretbox_open(UnsafeMutablePointer(mutating: messageBuffer),
                                                       paddedCipherBlock,
-                                                      UInt64(cipherBlock.count),
+                                                      UInt64(paddedCipherBlock.count),
                                                       fullNonce,
                                                       key)
 

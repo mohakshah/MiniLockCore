@@ -12,17 +12,17 @@ import libb2s
 
 extension MiniLock
 {
+    struct CryptoSecretBoxSizes {
+        static let CipherTextPadding = crypto_secretbox_boxzerobytes()
+        static let MessagePadding = crypto_secretbox_zerobytes()
+        static let MAC = crypto_secretbox_macbytes()
+        static let SecretKey = crypto_secretbox_keybytes()
+        static let Nonce = crypto_secretbox_noncebytes()
+    }
+
     /// This is a base class that contains the common entities of Encryptor and Decryptor classes
     /// It doesn't provide any functionalities.
     public class StreamCryptoBase {
-        struct CryptoSecretBoxSizes {
-            static let CipherTextPadding = crypto_secretbox_boxzerobytes()
-            static let MessagePadding = crypto_secretbox_zerobytes()
-            static let MAC = crypto_secretbox_macbytes()
-            static let SecretKey = crypto_secretbox_keybytes()
-            static let Nonce = crypto_secretbox_noncebytes()
-        }
-        
         static let Blake2sOutputLength = 32
         
         enum CryptoError: Error {

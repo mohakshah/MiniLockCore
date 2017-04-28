@@ -11,7 +11,7 @@ import libb2s
 
 extension MiniLock
 {
-    public struct Id: CustomStringConvertible
+    public struct Id: CustomStringConvertible, Equatable
     {
         public let binary: [UInt8]
         public let description: String
@@ -66,6 +66,10 @@ extension MiniLock
             
             self.binary = binary
             self.description = b58String
+        }
+        
+        public static func ==(lhs: Id, rhs: Id) -> Bool {
+            return lhs.binary == rhs.binary
         }
     }
 }

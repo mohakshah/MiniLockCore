@@ -44,3 +44,28 @@ func getTempFile() -> URL {
 
     return filePath
 }
+
+func createNewFile(inDirectory dir: URL, withName name: String) throws -> URL {
+    let initialPath = dir.appendingPathComponent(name)
+    var fullPath = initialPath
+    let copy = 1
+    
+    while FileManager.default.fileExists(atPath: fullPath.path) {
+        fullPath = initialPath.deletingLastPathComponent().appendingPathComponent(newName(for: initialPath, withIndex: copy))
+    }
+    
+    let createdSuccessfully = FileManager.default.createFile(atPath: fullPath.path, contents: nil, attributes: nil)
+    
+    if !createdSuccessfully {
+        throw MiniLock.Errors.CouldNotCreateFile
+    }
+    
+    return fullPath
+}
+
+func newName(for oldFilename: URL, withIndex index: Int) -> String {
+    let ext = oldFilename.pathExtension
+    let nameWithoutExt = oldFilename.deletingPathExtension().lastPathComponent
+    
+    return nameWithoutExt + " copy" + (index > 1 ? " \(index)" : "") + ext
+}
