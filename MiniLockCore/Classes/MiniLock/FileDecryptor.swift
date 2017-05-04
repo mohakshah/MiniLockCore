@@ -12,17 +12,26 @@ extension MiniLock
 {
     public final class FileDecryptor: MiniLockProcess
     {
-        let sourceFile: URL
-        let recipientKeys: KeyPair
-        
-        let fileSize: Double
-        
-        var bytesDecrypted: Int = 0 {
+        private let sourceFile: URL
+        private let recipientKeys: KeyPair
+        private let fileSize: Double
+        private var bytesDecrypted: Int = 0 {
             didSet {
                 processDelegate?.setProgress(to: Double(bytesDecrypted) / fileSize, process: self)
             }
         }
         
+        private var _processStatus: MiniLock.ProcessStatus = .incomplete
+        public var processStatus: MiniLock.ProcessStatus {
+            return _processStatus
+        }
+        private var _sender: MiniLock.Id?
+        public var sender: MiniLock.Id! {
+            return _sender
+        }
+        
+        private var headerOffsetInSourceFile: UInt64 = 0
+
         public weak var processDelegate: MiniLockProcessDelegate?
         
         public init(sourceFile: URL, recipientKeys: KeyPair) throws {
@@ -40,8 +49,49 @@ extension MiniLock
             self.fileSize = Double((try FileManager.default.attributesOfItem(atPath: self.sourceFile.path))[FileAttributeKey.size] as! UInt64)
         }
         
-        public func decrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws {
+        public func decrypt(deleteSourceFile: Bool) throws -> Data {
+            guard processStatus == .incomplete else {
+                throw Errors.ProcessComplete
+            }
+
+            let decryptor = try getBlockDecryptor()
+
             // open the source file for reading
+            let sourceHandle = try FileHandle(forReadingFrom: sourceFile)
+            defer {
+                sourceHandle.closeFile()
+            }
+            
+            sourceHandle.seek(toFileOffset: headerOffsetInSourceFile)
+            
+            // since this is an in-memory decryption, we don't care about the filename
+            let firstBlock = try readNextBlock(fromFileHandle: sourceHandle)
+            let _ = try decryptor.decrypt(cipherBlock: firstBlock, isLastBlock: false)
+            
+            var currentBlock = try readNextBlock(fromFileHandle: sourceHandle)
+            if currentBlock.isEmpty {
+                throw Errors.CorruptMiniLockFile
+            }
+            
+            var decryptedData = Data()
+            
+            while !currentBlock.isEmpty {
+                try autoreleasepool {
+                    let nextBlock = try readNextBlock(fromFileHandle: sourceHandle)
+                    let decryptedBlock = try decryptor.decrypt(cipherBlock: currentBlock, isLastBlock: nextBlock.isEmpty)
+
+                    decryptedData.append(decryptedBlock)
+
+                    bytesDecrypted += currentBlock.count
+                    currentBlock = nextBlock
+                }
+            }
+            
+            return decryptedData
+        }
+        
+        private func getBlockDecryptor() throws -> StreamDecryptor {
+            // open the source file for reading the header
             let sourceHandle = try FileHandle(forReadingFrom: sourceFile)
             defer {
                 sourceHandle.closeFile()
@@ -53,13 +103,13 @@ extension MiniLock
             guard sourceMagicBytes == FileFormat.MagicBytes else {
                 throw Errors.NotAMiniLockFile
             }
-
+            
             // read header length
             let headerSizeBytes = sourceHandle.readData(ofLength: FileFormat.HeaderBytesLength)
             guard headerSizeBytes.count == FileFormat.HeaderBytesLength else {
                 throw Errors.CorruptMiniLockFile
             }
-
+            
             var headerLength = 0
             
             for i in 0..<headerSizeBytes.count {
@@ -70,7 +120,7 @@ extension MiniLock
             var headerBytes = [UInt8](sourceHandle.readData(ofLength: headerLength))
             guard headerBytes.count == headerLength,
                 let headerString = String(bytes: headerBytes, encoding: .utf8) else {
-                throw Errors.CorruptMiniLockFile
+                    throw Errors.CorruptMiniLockFile
             }
             
             // free up memory
@@ -83,7 +133,7 @@ extension MiniLock
             
             guard let decryptInfo = header.decryptDecryptInfo(usingRecipientKeys: recipientKeys),
                 let fileInfo = decryptInfo.decryptFileInfo(usingRecipientKeys: recipientKeys) else {
-                throw Errors.NotARecipient
+                    throw Errors.NotARecipient
             }
             
             guard let fileKey = Data(base64Encoded: fileInfo.key),
@@ -91,8 +141,27 @@ extension MiniLock
                     throw Errors.CorruptMiniLockFile
             }
             
-            let decryptor = try StreamDecryptor(key: [UInt8](fileKey), fileNonce: [UInt8](fileNonce))
+            self._sender = decryptInfo.senderId
+            self.headerOffsetInSourceFile = sourceHandle.offsetInFile
+
+            return try StreamDecryptor(key: [UInt8](fileKey), fileNonce: [UInt8](fileNonce))
+        }
+
+        public func decrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws {
+            guard processStatus == .incomplete else {
+                throw Errors.ProcessComplete
+            }
             
+            let decryptor = try getBlockDecryptor()
+            
+            // open the source file for reading
+            let sourceHandle = try FileHandle(forReadingFrom: sourceFile)
+            defer {
+                sourceHandle.closeFile()
+            }
+            
+            sourceHandle.seek(toFileOffset: headerOffsetInSourceFile)
+
             let firstBlock = try readNextBlock(fromFileHandle: sourceHandle)
             let decryptedFirstBlock = try decryptor.decrypt(cipherBlock: firstBlock, isLastBlock: false)
             

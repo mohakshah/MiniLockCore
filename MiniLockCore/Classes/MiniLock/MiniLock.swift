@@ -24,6 +24,11 @@ public class MiniLock
         case NotARecipient
         case CouldNotDecodeFileName
         case HeaderParsingError
+        case ProcessComplete
+    }
+    
+    public enum ProcessStatus {
+        case incomplete, succeeded, failed
     }
 
     public class func isEncryptedFile(url: URL) throws -> Bool {

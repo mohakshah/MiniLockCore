@@ -222,3 +222,132 @@ extension MiniLock {
         }
     }
 }
+
+extension MiniLock.FileEncryptor {
+    public class func encrypt(_ data: Data, destinationFileURL destination: URL, sender: MiniLock.KeyPair, recipients: [MiniLock.Id]) throws {
+        guard !recipients.isEmpty, !data.isEmpty else {
+            throw MiniLock.Errors.RecepientListEmpty
+        }
+        
+        var encryptedSuccessfully = false
+        let fileManager = FileManager.default
+        
+        // open destination file for writing
+        var createdSuccessfully = fileManager.createFile(atPath: destination.path, contents: nil, attributes: nil)
+        if !createdSuccessfully {
+            throw MiniLock.Errors.CouldNotCreateFile
+        }
+        
+        let destinationHandle = try FileHandle(forWritingTo: destination)
+        defer {
+            destinationHandle.closeFile()
+            if !encryptedSuccessfully {
+                do {
+                    try fileManager.removeItem(at: destination)
+                } catch (let error) {
+                    print("Error deleting the destination: ", error)
+                }
+            }
+        }
+        
+        // create a temp file for encrypted payload
+        let encryptedPayloadURL = getTempFile()
+        
+        createdSuccessfully = fileManager.createFile(atPath: encryptedPayloadURL.path, contents: nil, attributes: nil)
+        if !createdSuccessfully {
+            throw MiniLock.Errors.CouldNotCreateFile
+        }
+        
+        // open that temp file for writing
+        var payloadHandle: FileHandle
+        do {
+            payloadHandle = try FileHandle(forWritingTo: encryptedPayloadURL)
+        } catch (let error) {
+            // delete temp file
+            do {
+                try fileManager.removeItem(at: encryptedPayloadURL)
+            } catch (let error) {
+                print("Error deleting the temp payload file: ", error)
+            }
+            
+            throw error
+        }
+        
+        defer {
+            // close and delete payload file
+            payloadHandle.closeFile()
+            do {
+                try FileManager.default.removeItem(at: encryptedPayloadURL)
+            } catch (let error) {
+                print("Error deleting the temp payload file: ", error)
+            }
+        }
+        
+        // write symmetrically encrypted payload to payloadHandle
+        let encryptor = MiniLock.StreamEncryptor()
+        let paddedFileName = Data(repeating: 0, count: MiniLock.FileFormat.FileNameMaxLength + 1)
+        let encryptedBlock = try encryptor.encrypt(messageBlock: paddedFileName, isLastBlock: false)
+        
+        payloadHandle.write(encryptedBlock)
+        
+        let totalDataBlocks = (data.count / MiniLock.FileFormat.PlainTextBlockMaxBytes)
+            + (data.count % MiniLock.FileFormat.PlainTextBlockMaxBytes > 0 ? 1 : 0)
+        
+        var blockStart = 0
+        var blockEnd = MiniLock.FileFormat.PlainTextBlockMaxBytes
+        for _ in 0..<totalDataBlocks {
+            if blockEnd > data.count {
+                blockEnd = data.count
+            }
+            
+            let encryptedBlock = try encryptor.encrypt(messageBlock: data.subdata(in: blockStart..<blockEnd),
+                                                       isLastBlock: blockEnd == data.count)
+            payloadHandle.write(encryptedBlock)
+            
+            blockStart += MiniLock.FileFormat.PlainTextBlockMaxBytes
+            blockEnd += MiniLock.FileFormat.PlainTextBlockMaxBytes
+        }
+        
+        // re-open payload file for reading
+        payloadHandle.closeFile()
+        payloadHandle = try FileHandle(forReadingFrom: encryptedPayloadURL)
+        
+        // write magic bytes to destination
+        destinationHandle.write(Data(MiniLock.FileFormat.MagicBytes))
+        
+        // create header
+        let header = MiniLock.Header(sender: sender,
+                                     recipients: recipients,
+                                     fileInfo: MiniLock.Header.FileInfo(key: encryptor.key, nonce: encryptor.fileNonce, hash: encryptor.cipherTextHash))
+        
+        guard let headerData = header?.toJSONStringWithoutEscapes()?.data(using: .utf8) else {
+            throw MiniLock.Errors.CouldNotConstructHeader
+        }
+        
+        // write header length to destination
+        let headerSize = headerData.count
+        
+        var headerSizeBytes = Data()
+        for i in 0..<MiniLock.FileFormat.HeaderBytesLength {
+            let byte = UInt8((headerSize >> (8 * i)) & 0xff)
+            headerSizeBytes.append(byte)
+        }
+        
+        destinationHandle.write(headerSizeBytes)
+        
+        // write the header to destination
+        destinationHandle.write(headerData)
+        
+        // copy over the payloadHandle to destination
+        var currentBlock = payloadHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
+        
+        while !currentBlock.isEmpty {
+            autoreleasepool {
+                destinationHandle.write(currentBlock)
+                currentBlock = payloadHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
+            }
+        }
+        
+        encryptedSuccessfully = true
+    }
+}

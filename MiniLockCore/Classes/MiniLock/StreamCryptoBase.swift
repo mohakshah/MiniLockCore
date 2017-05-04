@@ -32,10 +32,6 @@ extension MiniLock
             case macVerificationFailed
         }
         
-        public enum ProcessStatus {
-            case incomplete, succeeded, failed
-        }
-        
         var _processStatus: ProcessStatus = .incomplete
         public var processStatus: ProcessStatus {
             return _processStatus

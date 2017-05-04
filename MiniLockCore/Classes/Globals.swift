@@ -48,10 +48,11 @@ func getTempFile() -> URL {
 func createNewFile(inDirectory dir: URL, withName name: String) throws -> URL {
     let initialPath = dir.appendingPathComponent(name)
     var fullPath = initialPath
-    let copy = 1
+    var copyIndex = 1
     
     while FileManager.default.fileExists(atPath: fullPath.path) {
-        fullPath = initialPath.deletingLastPathComponent().appendingPathComponent(newName(for: initialPath, withIndex: copy))
+        fullPath = initialPath.deletingLastPathComponent().appendingPathComponent(newName(for: initialPath, withIndex: copyIndex))
+        copyIndex += 1
     }
     
     let createdSuccessfully = FileManager.default.createFile(atPath: fullPath.path, contents: nil, attributes: nil)
