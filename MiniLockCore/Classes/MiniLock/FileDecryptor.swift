@@ -147,7 +147,7 @@ extension MiniLock
             return try StreamDecryptor(key: [UInt8](fileKey), fileNonce: [UInt8](fileNonce))
         }
 
-        public func decrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws {
+        public func decrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws -> URL {
             guard processStatus == .incomplete else {
                 throw Errors.ProcessComplete
             }
@@ -209,6 +209,8 @@ extension MiniLock
                     print("Error deleting the source file: ", error)
                 }
             }
+            
+            return destinationFile
         }
         
         private func readNextBlock(fromFileHandle fileHandle: FileHandle) throws -> Data {

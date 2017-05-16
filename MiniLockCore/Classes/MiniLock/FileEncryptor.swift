@@ -52,12 +52,12 @@ extension MiniLock {
         }
         
         public func encrypt(destinationFileURL destination: URL, deleteSourceFile: Bool) throws {
-            try self.encrypt(destinationDirectory: destination.deletingLastPathComponent(),
+            _ = try self.encrypt(destinationDirectory: destination.deletingLastPathComponent(),
                          filename: destination.lastPathComponent,
                          deleteSourceFile: deleteSourceFile)
         }
         
-        public func encrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws {
+        public func encrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws -> URL {
             // create destination file
             let filename = suggestedFilename ?? sourceFile.appendingPathExtension(MiniLock.FileFormat.FileExtension).lastPathComponent
             let destination = try createNewFile(inDirectory: destinationDirectory, withName: filename)
@@ -205,6 +205,8 @@ extension MiniLock {
             }
             
             encryptedSuccessfully = true
+            
+            return destination
         }
         
         class func paddedFileName(fromFileURL url: URL) -> Data {
