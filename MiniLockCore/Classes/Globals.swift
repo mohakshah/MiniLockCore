@@ -65,7 +65,7 @@ func createNewFile(inDirectory dir: URL, withName name: String) throws -> URL {
 }
 
 func newName(for oldFilename: URL, withIndex index: Int) -> String {
-    let ext = oldFilename.pathExtension
+    let ext = "." + oldFilename.pathExtension
     let nameWithoutExt = oldFilename.deletingPathExtension().lastPathComponent
     
     return nameWithoutExt + " copy" + (index > 1 ? " \(index)" : "") + ext

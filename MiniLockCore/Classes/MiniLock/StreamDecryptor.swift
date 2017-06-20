@@ -65,12 +65,19 @@ extension MiniLock
             }
 
             // attempt to decrypt cipher text
-            let paddedCipherBlock = cipherPadding + cipherBlock[MiniLock.FileFormat.BlockSizeTagLength..<cipherBlock.count]
-            let returnValue = crypto_secretbox_open(UnsafeMutablePointer(mutating: messageBuffer),
-                                                      paddedCipherBlock,
-                                                      UInt64(paddedCipherBlock.count),
-                                                      fullNonce,
-                                                      key)
+            
+            // note: padding using "append" function instead of '+' operator vastly improves the performance
+            var paddedCipherBlock = Data(cipherPadding)
+            paddedCipherBlock.append(cipherBlock[MiniLock.FileFormat.BlockSizeTagLength..<cipherBlock.count])
+
+            let returnValue = paddedCipherBlock.withUnsafeBytes { (cipherBlockPointer: UnsafePointer<UInt8>) -> Int32 in
+              return crypto_secretbox_open(UnsafeMutablePointer(mutating: messageBuffer),
+                                             cipherBlockPointer,
+                                             UInt64(paddedCipherBlock.count),
+                                             fullNonce,
+                                             key)
+            }
+            
 
             incrementNonce()
 
