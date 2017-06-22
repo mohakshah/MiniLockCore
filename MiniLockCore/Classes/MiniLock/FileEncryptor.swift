@@ -60,7 +60,7 @@ extension MiniLock {
         public func encrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws -> URL {
             // create destination file
             let filename = suggestedFilename ?? sourceFile.appendingPathExtension(MiniLock.FileFormat.FileExtension).lastPathComponent
-            let destination = try createNewFile(inDirectory: destinationDirectory, withName: filename)
+            let destination = try GlobalUtils.createNewFile(inDirectory: destinationDirectory, withName: filename)
             
             var encryptedSuccessfully = false
             let fileManager = FileManager.default
@@ -95,37 +95,28 @@ extension MiniLock {
                     }
                 }
             }
-
-            // create a temp file for encrypted payload
-            let encryptedPayloadURL = getTempFile()
             
-            createdSuccessfully = fileManager.createFile(atPath: encryptedPayloadURL.path, contents: nil, attributes: nil)
-            if !createdSuccessfully {
+            // get a file descriptor and path to a temp file
+            let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath()
+            if payloadFD == -1 {
                 throw Errors.CouldNotCreateFile
             }
-
-            // open that temp file for writing
-            var payloadHandle: FileHandle
-            do {
-                payloadHandle = try FileHandle(forWritingTo: encryptedPayloadURL)
-            } catch (let error) {
-                // delete temp file
-                do {
-                    try fileManager.removeItem(at: encryptedPayloadURL)
-                } catch (let error) {
-                    print("Error deleting the temp payload file: ", error)
-                }
-                
-                throw error
-            }
+            
+            let payloadHandle = FileHandle(fileDescriptor: payloadFD, closeOnDealloc: true)
 
             defer {
                 // close and delete payload file
                 payloadHandle.closeFile()
-                do {
-                    try FileManager.default.removeItem(at: encryptedPayloadURL)
-                } catch (let error) {
-                    print("Error deleting the temp payload file: ", error)
+                
+                // create url object from payloadPath
+                if let url = URL(string: "file://" + String(cString: payloadPath)) {
+                    do {
+                        try FileManager.default.removeItem(at: url)
+                    } catch (let error) {
+                        print("Error deleting the temp payload file: ", error)
+                    }
+                } else {
+                    print("Could not create URL object from payloadPath:", "file://" + String(cString: payloadPath))
                 }
             }
             
@@ -164,9 +155,8 @@ extension MiniLock {
                 }
             }
 
-            // re-open payload file for reading
-            payloadHandle.closeFile()
-            payloadHandle = try FileHandle(forReadingFrom: encryptedPayloadURL)
+            // seek to the beginning of payloadHandle
+            payloadHandle.seek(toFileOffset: UInt64(0))
             
             // write magic bytes to destination
             destinationHandle.write(Data(MiniLock.FileFormat.MagicBytes))
@@ -252,36 +242,27 @@ extension MiniLock.FileEncryptor {
             }
         }
         
-        // create a temp file for encrypted payload
-        let encryptedPayloadURL = getTempFile()
-        
-        createdSuccessfully = fileManager.createFile(atPath: encryptedPayloadURL.path, contents: nil, attributes: nil)
-        if !createdSuccessfully {
+        // get a file descriptor and path to a temp file
+        let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath()
+        if payloadFD == -1 {
             throw MiniLock.Errors.CouldNotCreateFile
         }
         
-        // open that temp file for writing
-        var payloadHandle: FileHandle
-        do {
-            payloadHandle = try FileHandle(forWritingTo: encryptedPayloadURL)
-        } catch (let error) {
-            // delete temp file
-            do {
-                try fileManager.removeItem(at: encryptedPayloadURL)
-            } catch (let error) {
-                print("Error deleting the temp payload file: ", error)
-            }
-            
-            throw error
-        }
+        let payloadHandle = FileHandle(fileDescriptor: payloadFD, closeOnDealloc: true)
         
         defer {
             // close and delete payload file
             payloadHandle.closeFile()
-            do {
-                try FileManager.default.removeItem(at: encryptedPayloadURL)
-            } catch (let error) {
-                print("Error deleting the temp payload file: ", error)
+
+            // create url object from payloadPath
+            if let url = URL(string: "file://" + String(cString: payloadPath)) {
+                do {
+                    try FileManager.default.removeItem(at: url)
+                } catch (let error) {
+                    print("Error deleting the temp payload file: ", error)
+                }
+            } else {
+                print("Could not create URL object from payloadPath:", "file://" + String(cString: payloadPath))
             }
         }
         
@@ -310,9 +291,8 @@ extension MiniLock.FileEncryptor {
             blockEnd += MiniLock.FileFormat.PlainTextBlockMaxBytes
         }
         
-        // re-open payload file for reading
-        payloadHandle.closeFile()
-        payloadHandle = try FileHandle(forReadingFrom: encryptedPayloadURL)
+        // seek to the beginning of payloadHandle
+        payloadHandle.seek(toFileOffset: 0)
         
         // write magic bytes to destination
         destinationHandle.write(Data(MiniLock.FileFormat.MagicBytes))

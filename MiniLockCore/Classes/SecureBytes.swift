@@ -22,6 +22,11 @@ public class SecureBytes {
     let length: Int
     let bytes: UnsafeMutablePointer<UInt8>
     
+    /// Allocates an array of bytes of size 'length' using sodium_malloc
+    ///
+    /// - Parameters:
+    ///   - length: size of the array
+    /// - Returns: nil if allocation failed for some reason (e.g. Low memory)
     init?(ofLength length: Int) {
         self.length = length
         guard let bytesPointer = sodium_malloc(length) else {

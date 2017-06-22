@@ -177,7 +177,7 @@ extension MiniLock
                 basename = suggestedFilename!
             }
             
-            let destinationFile = try createNewFile(inDirectory: destinationDirectory, withName: basename)
+            let destinationFile = try GlobalUtils.createNewFile(inDirectory: destinationDirectory, withName: basename)
 
             let destinationHandle = try FileHandle(forWritingTo: destinationFile)
             

@@ -8,65 +8,59 @@
 
 import Foundation
 
-extension Array {
-    /// Copies all elements of "array" to self, starting from "index"
+class GlobalUtils
+{
+    /// Creates a temp file through mkstemp using 'tempFileTemplate' as a template
     ///
-    /// - Parameters:
-    ///   - array: Array of elements to copy from
-    ///   - index: index of self to start copying from
-    mutating func overwrite(with array: [Element], atIndex index: Int) {
-        overwrite(with: ArraySlice(array), atIndex: index)
+    /// - Returns: (fileDescriptor: Int32, filePath: [CChar])
+    ///             The fileDescriptor points to a temp file open for reading and writing.
+    ///             In case of error fileDescriptor will be -1
+    class func getTempFileDescriptorAndPath() -> (Int32, [CChar]) {
+        let mutableTemplate = tempFileTemplate
+        let fd = mkstemp(UnsafeMutablePointer(mutating: mutableTemplate))
+        return (fd, mutableTemplate)
     }
-    
-    
-    /// Copies all elements of "slice" to self, starting from "index"
+
+    /// A template for a temp file under the 'NSTemporaryDirectory'.
+    ///  Suitable for passing to mktemp/mkstemp. (Entropy = 62 ^ 10)
+    fileprivate static let tempFileTemplate: [Int8] = {
+        let template = URL(string: "file://" + NSTemporaryDirectory())!.appendingPathComponent("XXXXXXXXXX", isDirectory: false) as NSURL
+        print("Template URL:", template)
+        let fsRepresentation = template.fileSystemRepresentation
+        return Array(UnsafeBufferPointer(start: fsRepresentation, count: Int(strlen(fsRepresentation))))
+    }()
+
+    /// Creates a new file in 'dir' of name 'name'. If a file wih that name
+    /// exists already, it tries to use a different name by appending copy 1, copy 2, copy 3, etc.
     ///
     /// - Parameters:
-    ///   - slice: ArraySlice of elements to copy from
-    ///   - index: index of self to start copying from
-    mutating func overwrite(with slice: ArraySlice<Element>, atIndex index: Int) {
-        let sliceStart = slice.startIndex
-        for i in 0..<slice.count {
-            self[index + i] = slice[sliceStart + i]
+    ///   - dir: Directory inside which the file is to be placed
+    ///   - name: Preferred name of the file
+    /// - Returns: URL to the file finally created
+    /// - Throws: MiniLock.Errors.CouldNotCreateFile if FileManager failes to create the file
+    class func createNewFile(inDirectory dir: URL, withName name: String) throws -> URL {
+        let initialPath = dir.appendingPathComponent(name)
+        var fullPath = initialPath
+        var copyIndex = 1
+        
+        while FileManager.default.fileExists(atPath: fullPath.path) {
+            fullPath = initialPath.deletingLastPathComponent().appendingPathComponent(newName(for: initialPath, withIndex: copyIndex))
+            copyIndex += 1
         }
+        
+        let createdSuccessfully = FileManager.default.createFile(atPath: fullPath.path, contents: nil, attributes: nil)
+        
+        if !createdSuccessfully {
+            throw MiniLock.Errors.CouldNotCreateFile
+        }
+        
+        return fullPath
     }
-}
 
-// TODO: replace with mkstemp
-func getTempFile() -> URL {
-    var filePath: URL
-    var exists: Bool
-
-    repeat {
-        filePath = URL(string: "file://" + NSTemporaryDirectory())!.appendingPathComponent(UUID().uuidString, isDirectory: false)
-        exists = FileManager.default.fileExists(atPath: filePath.absoluteString)
-    } while (exists)
-
-    return filePath
-}
-
-func createNewFile(inDirectory dir: URL, withName name: String) throws -> URL {
-    let initialPath = dir.appendingPathComponent(name)
-    var fullPath = initialPath
-    var copyIndex = 1
-    
-    while FileManager.default.fileExists(atPath: fullPath.path) {
-        fullPath = initialPath.deletingLastPathComponent().appendingPathComponent(newName(for: initialPath, withIndex: copyIndex))
-        copyIndex += 1
+    class func newName(for oldFilename: URL, withIndex index: Int) -> String {
+        let ext = "." + oldFilename.pathExtension
+        let nameWithoutExt = oldFilename.deletingPathExtension().lastPathComponent
+        
+        return nameWithoutExt + " copy" + (index > 1 ? " \(index)" : "") + ext
     }
-    
-    let createdSuccessfully = FileManager.default.createFile(atPath: fullPath.path, contents: nil, attributes: nil)
-    
-    if !createdSuccessfully {
-        throw MiniLock.Errors.CouldNotCreateFile
-    }
-    
-    return fullPath
-}
-
-func newName(for oldFilename: URL, withIndex index: Int) -> String {
-    let ext = "." + oldFilename.pathExtension
-    let nameWithoutExt = oldFilename.deletingPathExtension().lastPathComponent
-    
-    return nameWithoutExt + " copy" + (index > 1 ? " \(index)" : "") + ext
 }
