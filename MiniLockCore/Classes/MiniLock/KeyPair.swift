@@ -29,20 +29,20 @@ extension MiniLock
         
         static let Blake2SOutputLength = 32
         
-        public let privateKey: [UInt8]
+        public let privateKey: SecureBytes
         public let publicId: MiniLock.Id
         
         /// Initializes a keypair from an existing private key
         ///
         /// - Returns: fails if privatekey length != KeySizes.PrivateKey
-        public init?(fromPrivateKey privateKey: [UInt8]) {
-            if privateKey.count != KeySizes.PrivateKey {
+        public init?(fromPrivateKey privateKey: SecureBytes) {
+            if privateKey.length != KeySizes.PrivateKey {
                 return nil
             }
             
             // derive the public key from the private key
             let publicKey = [UInt8](repeating: 0, count: KeySizes.PublicKey)
-            crypto_scalarmult_base(UnsafeMutablePointer(mutating: publicKey), privateKey)
+            crypto_scalarmult_base(UnsafeMutablePointer(mutating: publicKey), privateKey.bytes)
 
             self.publicId = Id(fromBinaryPublicKey: publicKey)!
             self.privateKey = privateKey
@@ -54,38 +54,41 @@ extension MiniLock
         public init?(fromEmail email: String, andPassword password: String) {
             // hash the password using blake2s
             let blake2sInput = [UInt8](password.utf8)
-            let blake2sOutput = [UInt8](repeating: 0, count: KeyPair.Blake2SOutputLength)
+            guard let blake2sOutput = SecureBytes(ofLength: KeyPair.Blake2SOutputLength) else {
+                return nil
+            }
             
-            blake2s(UnsafeMutablePointer(mutating: blake2sOutput),
+            blake2s(blake2sOutput.bytes,
                     blake2sInput,
                     nil,
-                    blake2sOutput.count,
+                    blake2sOutput.length,
                     blake2sInput.count,
                     0)
             
-            // TODO: zero out blake2sInput
+            // zero out blake2sInput
+            sodium_memzero(UnsafeMutablePointer(mutating: blake2sInput), blake2sInput.count)
             
             // hash the result of the previous hash using scrypt with the email as the salt
             let scryptSalt: [UInt8] = Array(email.utf8)
-            let scryptOutput = [UInt8](repeating: 0, count: ScryptParameters.OutputLength)
-            let ret = crypto_pwhash_scryptsalsa208sha256_ll(blake2sOutput,
+            guard let scryptOutput = SecureBytes(ofLength: ScryptParameters.OutputLength) else {
+                return nil
+            }
+
+            let ret = crypto_pwhash_scryptsalsa208sha256_ll(blake2sOutput.bytes,
                                                             KeyPair.Blake2SOutputLength,
                                                             scryptSalt,
                                                             scryptSalt.count,
                                                             ScryptParameters.N,
                                                             ScryptParameters.R,
                                                             ScryptParameters.P,
-                                                            UnsafeMutablePointer(mutating: scryptOutput),
+                                                            scryptOutput.bytes,
                                                             ScryptParameters.OutputLength)
             
             guard ret == 0 else {
                 return nil
             }
             
-            // create a [UInt8] from scrypt's output and use it to generate a keypair
-            let privateKey: [UInt8] = Array(UnsafeBufferPointer(start: scryptOutput,
-                                                                count: ScryptParameters.OutputLength))
-            self.init(fromPrivateKey: privateKey)
+            self.init(fromPrivateKey: scryptOutput)
         }
     }
     

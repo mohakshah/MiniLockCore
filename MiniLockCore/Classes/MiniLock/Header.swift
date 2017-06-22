@@ -47,11 +47,11 @@ extension MiniLock {
             for i in 0..<recipients.count {
                 let cipherText = [UInt8](repeating: 0, count: fileInfoBytes.count + CryptoBoxSizes.MAC)
                 let ret = crypto_box_easy(UnsafeMutablePointer(mutating: cipherText),
-                                fileInfoBytes,
-                                UInt64(fileInfoBytes.count),
-                                recipientNonces[i],
-                                recipients[i].binary,
-                                sender.privateKey)
+                                          fileInfoBytes,
+                                          UInt64(fileInfoBytes.count),
+                                          recipientNonces[i],
+                                          recipients[i].binary,
+                                          sender.privateKey.bytes)
                 
                 if ret != 0 {
                     return nil
@@ -132,7 +132,7 @@ extension MiniLock {
                                                UInt64(cipher.count),
                                                nonce,
                                                epehemeralPublicKeyBinary,
-                                               recipientKeys.privateKey)
+                                               recipientKeys.privateKey.bytes)
                 
                 if ret == 0,
                     let jsonString = String(bytes: decipheredBytes, encoding: .utf8),
@@ -199,7 +199,7 @@ extension MiniLock.Header {
                                            UInt64(cipherBytes.count),
                                            nonce,
                                            senderId.binary,
-                                           recipientKeys.privateKey)
+                                           recipientKeys.privateKey.bytes)
             
             if ret == 0,
                 let jsonString = String(bytes: decipheredBytes, encoding: .utf8),
@@ -207,6 +207,9 @@ extension MiniLock.Header {
                     return ptFileInfo
             }
             
+            let foo: String
+            foo = "HEllo"
+            print(foo)
             return nil
         }
     }

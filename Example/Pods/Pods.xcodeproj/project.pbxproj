@@ -168,6 +168,7 @@
 		6D99DB9C1AB1BBC3BA02AB03551FF652 /* QuickSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 13CB3DAC8AFFB2E6363F74EEFA14B15A /* QuickSpec.m */; };
 		6E397D9FB11A47E48D70287D734B12B2 /* BeLessThan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E926997AB55FFA10E3BB1913A38CE6 /* BeLessThan.swift */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
 		70F3252B4EAFDF0E0B2A7EFABBFA2488 /* ladder_base.h in Headers */ = {isa = PBXBuildFile; fileRef = 1CCE5F36BF24F150B9AC537773F48DD0 /* ladder_base.h */; settings = {ATTRIBUTES = (Project, ); }; };
+		710888BD1EFBB2CB001C7FBE /* SecureBytes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710888BC1EFBB2CB001C7FBE /* SecureBytes.swift */; };
 		71AA59541EAA2280008436C0 /* FileDecryptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71AA59531EAA2280008436C0 /* FileDecryptor.swift */; };
 		71F7447117FE57ADDB4B657FDDBB5A0E /* randombytes_salsa20_random.h in Headers */ = {isa = PBXBuildFile; fileRef = D13C16713F52EC8EDE3A4BAE324AC806 /* randombytes_salsa20_random.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7212822ACA1BA68E18A3AECC857CB750 /* curve25519_donna_c64.c in Sources */ = {isa = PBXBuildFile; fileRef = E3FDB83C3F8C8CB1902BD385FBA043BB /* curve25519_donna_c64.c */; settings = {COMPILER_FLAGS = "-DNATIVE_LITTLE_ENDIAN=1 -DHAVE_MADVISE -DHAVE_MMAP -DHAVE_MPROTECT -DHAVE_POSIX_MEMALIGN -DHAVE_WEAK_SYMBOLS -fno-objc-arc"; }; };
@@ -674,6 +675,7 @@
 		704D5F89658BD978B1ED536AA93DD2F3 /* curve25519_ref10.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; name = curve25519_ref10.c; path = src/libsodium/crypto_core/curve25519/ref10/curve25519_ref10.c; sourceTree = "<group>"; };
 		705C9A27ECAC7ADCC3A36F213BF229E2 /* XCTestObservationCenter+Register.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = "XCTestObservationCenter+Register.m"; path = "Sources/NimbleObjectiveC/XCTestObservationCenter+Register.m"; sourceTree = "<group>"; };
 		70EE29BB41E31C49D7AD8D05346A20DD /* aead_aes256gcm_aesni.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; name = aead_aes256gcm_aesni.c; path = src/libsodium/crypto_aead/aes256gcm/aesni/aead_aes256gcm_aesni.c; sourceTree = "<group>"; };
+		710888BC1EFBB2CB001C7FBE /* SecureBytes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SecureBytes.swift; sourceTree = "<group>"; };
 		71AA59531EAA2280008436C0 /* FileDecryptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileDecryptor.swift; sourceTree = "<group>"; };
 		72D0C59C92329EEDDD028B0141B6D363 /* TransformOf.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TransformOf.swift; path = Sources/TransformOf.swift; sourceTree = "<group>"; };
 		7346306E8142AC29F2D37BD609627993 /* World.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = World.swift; path = Sources/Quick/World.swift; sourceTree = "<group>"; };
@@ -1023,6 +1025,7 @@
 			isa = PBXGroup;
 			children = (
 				4079C57DDD6ACCFDF7D318E00145161D /* Base58.swift */,
+				710888BC1EFBB2CB001C7FBE /* SecureBytes.swift */,
 				E1139356348D9047032CCAD73C49497C /* Globals.swift */,
 				43FDAC3A74616C5A409DB90F5E2D9E8E /* MiniLock */,
 			);
@@ -2229,6 +2232,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3F4AD00858D389AD4BF40922789F396B /* Base58.swift in Sources */,
+				710888BD1EFBB2CB001C7FBE /* SecureBytes.swift in Sources */,
 				1A03E99D341DCC6B908A2F0F155F361C /* FileEncryptor.swift in Sources */,
 				D89B2BCAE6BFA018794A10C72707DCDA /* FileFormat.swift in Sources */,
 				C2FA86B14D82FF7DA9A99417E737989C /* Globals.swift in Sources */,
