@@ -97,7 +97,7 @@ extension MiniLock {
             }
             
             // get a file descriptor and path to a temp file
-            let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath()
+            let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath(withFileExtension: nil, in: nil)
             if payloadFD == -1 {
                 throw Errors.CouldNotCreateFile
             }
@@ -243,7 +243,7 @@ extension MiniLock.FileEncryptor {
         }
         
         // get a file descriptor and path to a temp file
-        let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath()
+        let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath(withFileExtension: nil, in: nil)
         if payloadFD == -1 {
             throw MiniLock.Errors.CouldNotCreateFile
         }

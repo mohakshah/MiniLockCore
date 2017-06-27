@@ -8,27 +8,58 @@
 
 import Foundation
 
-class GlobalUtils
+public class GlobalUtils
 {
-    /// Creates a temp file through mkstemp using 'tempFileTemplate' as a template
+    
+    
+    /// Creates a _unique_ file with `extnsn` extension in `directory` using mkstemps
     ///
+    /// - Parameters:
+    ///   - extnsn: Extension of the file or nil if the file should not have any extension
+    ///   - directory: Path of the parent directory or nil to use NSTemporaryDirectory()
     /// - Returns: (fileDescriptor: Int32, filePath: [CChar])
-    ///             The fileDescriptor points to a temp file open for reading and writing.
+    ///             Note: The fileDescriptor points to the new file open for reading and writing.
     ///             In case of error fileDescriptor will be -1
-    class func getTempFileDescriptorAndPath() -> (Int32, [CChar]) {
-        let mutableTemplate = tempFileTemplate
-        let fd = mkstemp(UnsafeMutablePointer(mutating: mutableTemplate))
-        return (fd, mutableTemplate)
+    public class func getTempFileDescriptorAndPath(withFileExtension extnsn: String?, in directory: URL?) -> (Int32, [CChar]) {
+        guard let template = mkstempsTemplate(withFileExtension: extnsn, in: directory?.path ?? NSTemporaryDirectory()) else {
+            return (-1, [CChar]())
+        }
+        
+        let extensionLength: Int32
+        if let extnsn = extnsn {
+            extensionLength = Int32(extnsn.utf8.count + 1)
+        } else {
+            extensionLength = 0
+        }
+
+        let fd = mkstemps(UnsafeMutablePointer(mutating: template), extensionLength)
+        return (fd, template)
     }
 
-    /// A template for a temp file under the 'NSTemporaryDirectory'.
-    ///  Suitable for passing to mktemp/mkstemp. (Entropy = 62 ^ 10)
-    fileprivate static let tempFileTemplate: [Int8] = {
-        let template = URL(string: "file://" + NSTemporaryDirectory())!.appendingPathComponent("XXXXXXXXXX", isDirectory: false) as NSURL
-        print("Template URL:", template)
+    /// Generates a template suitable to use with mktemp() function family. (Entropy = 62 ^ 10)
+    ///
+    /// - Parameters:
+    ///   - fileExtension: Extension to use in template or nil for no template (Use only with mkstemps)
+    ///   - directory: Path of the parent directory
+    /// - Returns: The template usable with mktemp() function family or nil in case of any errors
+    fileprivate class func mkstempsTemplate(withFileExtension fileExtension: String?, in directory: String) -> [Int8]? {
+        guard let directoryURL = URL(string: "file://" + directory) else {
+            return nil
+        }
+
+        var template = directoryURL.appendingPathComponent("XXXXXXXXXX", isDirectory: false) as NSURL
+        
+        if let extnsn = fileExtension, !extnsn.isEmpty {
+            if let newTemplate = template.appendingPathExtension(extnsn) as NSURL? {
+                template = newTemplate
+            } else {
+                return nil
+            }
+        }
+
         let fsRepresentation = template.fileSystemRepresentation
         return Array(UnsafeBufferPointer(start: fsRepresentation, count: Int(strlen(fsRepresentation))))
-    }()
+    }
 
     /// Creates a new file in 'dir' of name 'name'. If a file wih that name
     /// exists already, it tries to use a different name by appending copy 1, copy 2, copy 3, etc.
