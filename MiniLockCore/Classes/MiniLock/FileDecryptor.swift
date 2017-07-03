@@ -36,11 +36,11 @@ extension MiniLock
         
         public init(sourceFile: URL, recipientKeys: KeyPair) throws {
             guard sourceFile.isFileURL else {
-                throw Errors.NotAFileURL
+                throw Errors.notAFileURL
             }
             
             guard !sourceFile.lastPathComponent.isEmpty else {
-                throw Errors.FileNameEmpty
+                throw Errors.fileNameEmpty
             }
             
             self.sourceFile = sourceFile
@@ -51,7 +51,7 @@ extension MiniLock
         
         public func decrypt(deleteSourceFile: Bool) throws -> Data {
             guard processStatus == .incomplete else {
-                throw Errors.ProcessComplete
+                throw Errors.processAlreadyComplete
             }
 
             let decryptor = try getBlockDecryptor()
@@ -70,7 +70,7 @@ extension MiniLock
             
             var currentBlock = try readNextBlock(fromFileHandle: sourceHandle)
             if currentBlock.isEmpty {
-                throw Errors.CorruptMiniLockFile
+                throw Errors.corruptMiniLockFile
             }
             
             var decryptedData = Data()
@@ -101,13 +101,13 @@ extension MiniLock
             let sourceMagicBytes = [UInt8](sourceHandle.readData(ofLength: FileFormat.MagicBytes.count))
             
             guard sourceMagicBytes == FileFormat.MagicBytes else {
-                throw Errors.NotAMiniLockFile
+                throw Errors.notAMiniLockFile
             }
             
             // read header length
             let headerSizeBytes = sourceHandle.readData(ofLength: FileFormat.HeaderBytesLength)
             guard headerSizeBytes.count == FileFormat.HeaderBytesLength else {
-                throw Errors.CorruptMiniLockFile
+                throw Errors.corruptMiniLockFile
             }
             
             var headerLength = 0
@@ -120,7 +120,7 @@ extension MiniLock
             var headerBytes = [UInt8](sourceHandle.readData(ofLength: headerLength))
             guard headerBytes.count == headerLength,
                 let headerString = String(bytes: headerBytes, encoding: .utf8) else {
-                    throw Errors.CorruptMiniLockFile
+                    throw Errors.corruptMiniLockFile
             }
             
             // free up memory
@@ -128,17 +128,17 @@ extension MiniLock
             
             // get fileInfo and decryptInfo from the header
             guard let header = try? Header(JSONString: headerString) else {
-                throw Errors.CorruptMiniLockFile
+                throw Errors.corruptMiniLockFile
             }
             
             guard let decryptInfo = header.decryptDecryptInfo(usingRecipientKeys: recipientKeys),
                 let fileInfo = decryptInfo.decryptFileInfo(usingRecipientKeys: recipientKeys) else {
-                    throw Errors.NotARecipient
+                    throw Errors.notARecipient
             }
             
             guard let fileKey = Data(base64Encoded: fileInfo.key),
                 let fileNonce = Data(base64Encoded: fileInfo.nonce) else {
-                    throw Errors.CorruptMiniLockFile
+                    throw Errors.corruptMiniLockFile
             }
             
             self._sender = decryptInfo.senderId
@@ -149,7 +149,7 @@ extension MiniLock
 
         public func decrypt(destinationDirectory: URL, filename suggestedFilename: String?, deleteSourceFile: Bool) throws -> URL {
             guard processStatus == .incomplete else {
-                throw Errors.ProcessComplete
+                throw Errors.processAlreadyComplete
             }
             
             let decryptor = try getBlockDecryptor()
@@ -169,7 +169,7 @@ extension MiniLock
             
             if suggestedFilename == nil || suggestedFilename!.isEmpty {
                 guard let embeddedFilename = getFileName(fromBlock: decryptedFirstBlock) else {
-                    throw Errors.CouldNotDecodeFileName
+                    throw Errors.couldNotDecodeFileName
                 }
                 
                 basename = embeddedFilename
@@ -187,7 +187,7 @@ extension MiniLock
             
             var currentBlock = try readNextBlock(fromFileHandle: sourceHandle)
             if currentBlock.isEmpty {
-                throw Errors.CorruptMiniLockFile
+                throw Errors.corruptMiniLockFile
             }
             
             while !currentBlock.isEmpty {
@@ -223,7 +223,7 @@ extension MiniLock
             }
 
             guard blockLengthBytes.count == FileFormat.BlockSizeTagLength else {
-                throw Errors.CorruptMiniLockFile
+                throw Errors.corruptMiniLockFile
             }
             
             var blockLength = 0
@@ -233,7 +233,7 @@ extension MiniLock
             }
             
             guard blockLength <= FileFormat.PlainTextBlockMaxBytes else {
-                throw Errors.CorruptMiniLockFile
+                throw Errors.corruptMiniLockFile
             }
             
             // Also gotta read the MAC bytes
@@ -242,7 +242,7 @@ extension MiniLock
             let block = fileHandle.readData(ofLength: blockLength)
             
             guard block.count == blockLength else {
-                throw Errors.CorruptMiniLockFile
+                throw Errors.corruptMiniLockFile
             }
             
             return blockLengthBytes + block

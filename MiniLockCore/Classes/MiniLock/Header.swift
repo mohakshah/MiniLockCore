@@ -165,7 +165,7 @@ extension MiniLock.Header {
             
             guard let senderId = MiniLock.Id(fromBase58String: senderIdString),
                 let recipientId = MiniLock.Id(fromBase58String: recipientIdString) else {
-                    throw MiniLock.Errors.HeaderParsingError
+                    throw MiniLock.Errors.headerParsingError
             }
             
             self.senderId = senderId

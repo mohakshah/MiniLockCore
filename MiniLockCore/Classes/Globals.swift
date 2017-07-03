@@ -20,7 +20,7 @@ public class GlobalUtils
     /// - Returns: (fileDescriptor: Int32, filePath: [CChar])
     ///             Note: The fileDescriptor points to the new file open for reading and writing.
     ///             In case of error fileDescriptor will be -1
-    public class func getTempFileDescriptorAndPath(withFileExtension extnsn: String?, in directory: URL?) -> (Int32, [CChar]) {
+    public class func createUniqueFile(withExtension extnsn: String?, in directory: URL?) -> (Int32, [CChar]) {
         guard let template = mkstempsTemplate(withFileExtension: extnsn, in: directory?.path ?? NSTemporaryDirectory()) else {
             return (-1, [CChar]())
         }
@@ -33,6 +33,13 @@ public class GlobalUtils
         }
 
         let fd = mkstemps(UnsafeMutablePointer(mutating: template), extensionLength)
+        if (fd == -1) {
+            let errorMessage = "mkstemp failed for the following reason: ".cString(using: .utf8)!
+            perror(errorMessage)
+            print("Template used: ")
+            puts(template)
+        }
+
         return (fd, template)
     }
 
@@ -57,8 +64,13 @@ public class GlobalUtils
             }
         }
 
-        let fsRepresentation = template.fileSystemRepresentation
-        return Array(UnsafeBufferPointer(start: fsRepresentation, count: Int(strlen(fsRepresentation))))
+        let fsRepresentation = [Int8](repeating: 0, count: Int(PATH_MAX))
+        let success = template.getFileSystemRepresentation(UnsafeMutablePointer(mutating: fsRepresentation), maxLength: Int(PATH_MAX))
+        if !success {
+            return nil
+        }
+
+        return fsRepresentation
     }
 
     /// Creates a new file in 'dir' of name 'name'. If a file wih that name
@@ -68,7 +80,7 @@ public class GlobalUtils
     ///   - dir: Directory inside which the file is to be placed
     ///   - name: Preferred name of the file
     /// - Returns: URL to the file finally created
-    /// - Throws: MiniLock.Errors.CouldNotCreateFile if FileManager failes to create the file
+    /// - Throws: MiniLock.Errors.couldNotCreateFile if FileManager failes to create the file
     class func createNewFile(inDirectory dir: URL, withName name: String) throws -> URL {
         let initialPath = dir.appendingPathComponent(name)
         var fullPath = initialPath
@@ -82,14 +94,18 @@ public class GlobalUtils
         let createdSuccessfully = FileManager.default.createFile(atPath: fullPath.path, contents: nil, attributes: nil)
         
         if !createdSuccessfully {
-            throw MiniLock.Errors.CouldNotCreateFile
+            throw MiniLock.Errors.couldNotCreateFile
         }
         
         return fullPath
     }
 
     class func newName(for oldFilename: URL, withIndex index: Int) -> String {
-        let ext = "." + oldFilename.pathExtension
+        var ext = ""
+        if !oldFilename.pathExtension.isEmpty {
+            ext = "." + oldFilename.pathExtension
+        }
+
         let nameWithoutExt = oldFilename.deletingPathExtension().lastPathComponent
         
         return nameWithoutExt + " copy" + (index > 1 ? " \(index)" : "") + ext

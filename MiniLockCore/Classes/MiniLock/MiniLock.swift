@@ -13,18 +13,18 @@ import libb2s
 public class MiniLock
 {
     public enum Errors: Error {
-        case RecepientListEmpty
-        case NotAFileURL
-        case FileNameEmpty
-        case CouldNotCreateFile
-        case SourceFileEmpty
-        case CouldNotConstructHeader
-        case NotAMiniLockFile
-        case CorruptMiniLockFile
-        case NotARecipient
-        case CouldNotDecodeFileName
-        case HeaderParsingError
-        case ProcessComplete
+        case recepientListEmpty
+        case notAFileURL
+        case fileNameEmpty
+        case couldNotCreateFile
+        case sourceFileEmpty
+        case couldNotConstructHeader
+        case notAMiniLockFile
+        case corruptMiniLockFile
+        case notARecipient
+        case couldNotDecodeFileName
+        case headerParsingError
+        case processAlreadyComplete
     }
     
     public enum ProcessStatus {
@@ -33,7 +33,7 @@ public class MiniLock
 
     public class func isEncryptedFile(url: URL) throws -> Bool {
         guard url.isFileURL else {
-            throw Errors.NotAFileURL
+            throw Errors.notAFileURL
         }
         
         // read magic bytes from the file

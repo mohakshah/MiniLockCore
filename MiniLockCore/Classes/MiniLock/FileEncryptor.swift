@@ -30,18 +30,18 @@ extension MiniLock {
 
         public init(fileURL url: URL, sender: MiniLock.KeyPair, recipients: [MiniLock.Id]) throws {
             guard url.isFileURL else {
-                throw Errors.NotAFileURL
+                throw Errors.notAFileURL
             }
             
             guard !url.lastPathComponent.isEmpty else {
-                throw Errors.FileNameEmpty
+                throw Errors.fileNameEmpty
             }
 
             self.sourceFile = url
             self.sender = sender
 
             if recipients.isEmpty {
-                throw Errors.RecepientListEmpty
+                throw Errors.recepientListEmpty
             }
 
             self.recipients = recipients
@@ -68,7 +68,7 @@ extension MiniLock {
             // open destination file for writing
             var createdSuccessfully = fileManager.createFile(atPath: destination.path, contents: nil, attributes: nil)
             if !createdSuccessfully {
-                throw Errors.CouldNotCreateFile
+                throw Errors.couldNotCreateFile
             }
             
             let destinationHandle = try FileHandle(forWritingTo: destination)
@@ -97,9 +97,9 @@ extension MiniLock {
             }
             
             // get a file descriptor and path to a temp file
-            let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath(withFileExtension: nil, in: nil)
+            let (payloadFD, payloadPath) = GlobalUtils.createUniqueFile(withExtension: nil, in: nil)
             if payloadFD == -1 {
-                throw Errors.CouldNotCreateFile
+                throw Errors.couldNotCreateFile
             }
             
             let payloadHandle = FileHandle(fileDescriptor: payloadFD, closeOnDealloc: true)
@@ -128,7 +128,7 @@ extension MiniLock {
 
             var currentBlock = sourceHandle.readData(ofLength: MiniLock.FileFormat.PlainTextBlockMaxBytes)
             if currentBlock.isEmpty {
-                throw Errors.SourceFileEmpty
+                throw Errors.sourceFileEmpty
             }
             
             while !currentBlock.isEmpty {
@@ -167,7 +167,7 @@ extension MiniLock {
                                 fileInfo: Header.FileInfo(key: encryptor.key, nonce: encryptor.fileNonce, hash: encryptor.cipherTextHash))
             
             guard let headerData = header?.toJSONStringWithoutEscapes()?.data(using: .utf8) else {
-                throw Errors.CouldNotConstructHeader
+                throw Errors.couldNotConstructHeader
             }
 
             // write header length to destination
@@ -218,7 +218,7 @@ extension MiniLock {
 extension MiniLock.FileEncryptor {
     public class func encrypt(_ data: Data, destinationFileURL destination: URL, sender: MiniLock.KeyPair, recipients: [MiniLock.Id]) throws {
         guard !recipients.isEmpty, !data.isEmpty else {
-            throw MiniLock.Errors.RecepientListEmpty
+            throw MiniLock.Errors.recepientListEmpty
         }
         
         var encryptedSuccessfully = false
@@ -227,7 +227,7 @@ extension MiniLock.FileEncryptor {
         // open destination file for writing
         var createdSuccessfully = fileManager.createFile(atPath: destination.path, contents: nil, attributes: nil)
         if !createdSuccessfully {
-            throw MiniLock.Errors.CouldNotCreateFile
+            throw MiniLock.Errors.couldNotCreateFile
         }
         
         let destinationHandle = try FileHandle(forWritingTo: destination)
@@ -243,9 +243,9 @@ extension MiniLock.FileEncryptor {
         }
         
         // get a file descriptor and path to a temp file
-        let (payloadFD, payloadPath) = GlobalUtils.getTempFileDescriptorAndPath(withFileExtension: nil, in: nil)
+        let (payloadFD, payloadPath) = GlobalUtils.createUniqueFile(withExtension: nil, in: nil)
         if payloadFD == -1 {
-            throw MiniLock.Errors.CouldNotCreateFile
+            throw MiniLock.Errors.couldNotCreateFile
         }
         
         let payloadHandle = FileHandle(fileDescriptor: payloadFD, closeOnDealloc: true)
@@ -303,7 +303,7 @@ extension MiniLock.FileEncryptor {
                                      fileInfo: MiniLock.Header.FileInfo(key: encryptor.key, nonce: encryptor.fileNonce, hash: encryptor.cipherTextHash))
         
         guard let headerData = header?.toJSONStringWithoutEscapes()?.data(using: .utf8) else {
-            throw MiniLock.Errors.CouldNotConstructHeader
+            throw MiniLock.Errors.couldNotConstructHeader
         }
         
         // write header length to destination
