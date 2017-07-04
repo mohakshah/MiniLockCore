@@ -12,7 +12,7 @@ import libb2s
 
 public class MiniLock
 {
-    public enum Errors: Error {
+    public enum Errors: Error, CustomStringConvertible {
         case recepientListEmpty
         case notAFileURL
         case fileNameEmpty
@@ -25,6 +25,47 @@ public class MiniLock
         case couldNotDecodeFileName
         case headerParsingError
         case processAlreadyComplete
+        
+        
+        public var description: String {
+            switch self {
+            case .corruptMiniLockFile:
+                return "The file is corrupt."
+                
+            case .couldNotConstructHeader:
+                return "There was an error creating the header."
+                
+            case .couldNotCreateFile:
+                return "There was an error creating a new file."
+                
+            case .couldNotDecodeFileName:
+                return "The filename embedded in the encrypted file is corrupt."
+                
+            case .fileNameEmpty:
+                return "Input filename was empty."
+                
+            case .headerParsingError:
+                return "File header is corrupt."
+                
+            case .notAFileURL:
+                return "URL provided does not point to a file."
+                
+            case .notAMiniLockFile:
+                return "The file is not a miniLock encrypted file."
+                
+            case .processAlreadyComplete:
+                return "The encryption/decryption process is already complete."
+                
+            case .recepientListEmpty:
+                return "No recipients selected."
+                
+            case .sourceFileEmpty:
+                return "The file you selected was empty."
+                
+            case .notARecipient:
+                return "You are not a recipient."
+            }
+        }
     }
     
     public enum ProcessStatus {
