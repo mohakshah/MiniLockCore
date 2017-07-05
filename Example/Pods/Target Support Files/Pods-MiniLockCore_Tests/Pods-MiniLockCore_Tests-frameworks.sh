@@ -90,18 +90,14 @@ strip_invalid_archs() {
 
 if [[ "$CONFIGURATION" == "Debug" ]]; then
   install_framework "$BUILT_PRODUCTS_DIR/MiniLockCore/MiniLockCore.framework"
-  install_framework "$BUILT_PRODUCTS_DIR/Nimble/Nimble.framework"
   install_framework "$BUILT_PRODUCTS_DIR/ObjectMapper/ObjectMapper.framework"
-  install_framework "$BUILT_PRODUCTS_DIR/Quick/Quick.framework"
   install_framework "$BUILT_PRODUCTS_DIR/libb2s/libb2s.framework"
   install_framework "$BUILT_PRODUCTS_DIR/libbase58/libbase58.framework"
   install_framework "$BUILT_PRODUCTS_DIR/libsodium/libsodium.framework"
 fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
   install_framework "$BUILT_PRODUCTS_DIR/MiniLockCore/MiniLockCore.framework"
-  install_framework "$BUILT_PRODUCTS_DIR/Nimble/Nimble.framework"
   install_framework "$BUILT_PRODUCTS_DIR/ObjectMapper/ObjectMapper.framework"
-  install_framework "$BUILT_PRODUCTS_DIR/Quick/Quick.framework"
   install_framework "$BUILT_PRODUCTS_DIR/libb2s/libb2s.framework"
   install_framework "$BUILT_PRODUCTS_DIR/libbase58/libbase58.framework"
   install_framework "$BUILT_PRODUCTS_DIR/libsodium/libsodium.framework"

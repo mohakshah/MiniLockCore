@@ -1,8 +1,8 @@
 {
   "name": "MiniLockCore",
-  "version": "0.1.0",
-  "summary": "A library with swift implementation of miniLock's core functionalities.",
-  "description": "TODO: Add long description of the pod here.",
+  "version": "0.9.0",
+  "summary": "Swift implementation of miniLock's core functionalities.",
+  "description": "The library is a swift implementation of miniLock's core functionalities.\nIt was originally written for the SwiftLock app, but can be used as a plugin\nsystem in any other app wanting to use the modern and future-proof encryption\nscheme of miniLock.",
   "homepage": "https://github.com/mohakshah/MiniLockCore",
   "license": {
     "type": "MIT",
@@ -13,7 +13,7 @@
   },
   "source": {
     "git": "https://github.com/mohakshah/MiniLockCore.git",
-    "tag": "0.1.0"
+    "tag": "0.9.0"
   },
   "platforms": {
     "ios": "8.0"
