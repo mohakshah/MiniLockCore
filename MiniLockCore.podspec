@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'MiniLockCore'
-  s.version          = '0.9.0'
+  s.version          = '0.9.1'
   s.summary          = 'Swift implementation of miniLock\'s core functionalities.'
 
   s.description      = <<-DESC
