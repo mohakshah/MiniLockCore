@@ -1,5 +1,5 @@
 # MiniLockCore
-
+[![CI Status](http://img.shields.io/travis/mohakshah/MiniLockCore.svg?style=flat)](https://travis-ci.org/mohakshah/MiniLockCore)
 [![Version](https://img.shields.io/cocoapods/v/MiniLockCore.svg?style=flat)](http://cocoapods.org/pods/MiniLockCore)
 [![License](https://img.shields.io/cocoapods/l/MiniLockCore.svg?style=flat)](http://cocoapods.org/pods/MiniLockCore)
 [![Platform](https://img.shields.io/cocoapods/p/MiniLockCore.svg?style=flat)](http://cocoapods.org/pods/MiniLockCore)
