@@ -5,9 +5,6 @@
       location = "group:MiniLockCore.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:/Users/mohak/Developer/2017/SL/MiniLockCore/Example/Pods/Pods.xcodeproj">
-   </FileRef>
-   <FileRef
       location = "group:Pods/Pods.xcodeproj">
    </FileRef>
 </Workspace>
