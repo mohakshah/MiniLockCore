@@ -1,13 +1,16 @@
 Pod::Spec.new do |s|
   s.name             = 'MiniLockCore'
-  s.version          = '0.9.1'
+  s.version          = '0.9.2'
   s.summary          = 'Swift implementation of miniLock\'s core functionalities.'
 
   s.description      = <<-DESC
-The library is a swift implementation of miniLock's core functionalities.
-It was originally written for the SwiftLock app, but can be used as a plugin
-system in any other app wanting to use the modern and future-proof encryption
-scheme of miniLock.
+The library is an implementation of miniLock's core functionalities in Swift.
+It provides a modern Swift API to miniLock tasks such as user key management,
+file encryption, decryption, etc. There are also methods which allow encrypting
+data from memory and decrypting data to memory to completely avoid writing
+plain text to the disk. It was originally written for the SwiftLock app on iOS,
+but it can be used as a plugin component in any other app wanting to use
+miniLock's modern and future-proof encryption scheme.
                        DESC
 
   s.homepage         = 'https://github.com/mohakshah/MiniLockCore'

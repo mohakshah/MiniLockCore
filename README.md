@@ -6,11 +6,11 @@
 
 ## About
 
-The library is a swift implementation of miniLock's core functionalities. It was originally written for the SwiftLock app, but can be used as a plugin system in any other app wanting to use the modern and future-proof encryption scheme of miniLock.
+The library is an implementation of miniLock's core functionalities in Swift. It provides a modern Swift API to miniLock tasks such as user key management, file encryption, decryption, etc. There are also methods which allow encrypting data from memory and decrypting data to memory to completely avoid writing plain text to the disk. It was originally written for the [SwiftLock app](https://github.com/mohakshah/swiftlock-ios), but it can be used as a plugin component in any other app wanting to use miniLock's modern and future-proof encryption scheme.
 
 ## Requirements
 
-So far, the library has been only tested to work on iOS devices. Testing for macOS, watchOS and tvOS are pending. Any contributions here are welcome.
+Although the code is not written to be iOS dependent, so far, the library has been only tested to work on iOS devices. Testing for macOS, watchOS and tvOS are pending. Any contributions here are welcome.
 
 ## Installation
 
@@ -23,15 +23,14 @@ pod "MiniLockCore", '~> 0.9'
 
 ## Usage
 
-### Generating a user's keypair:
-
+### Generate a user's keypair:
 ```swift
 import MiniLockCore
 
 let keyPair = MiniLock.KeyPair(fromEmail: email, andPassword: password)!
 ```
-### Encrypt a file
 
+### Encrypt a file:
 ```swift
 do {
     let encryptor = try MiniLock.FileEncryptor(fileURL: urlOfSourceFile,
