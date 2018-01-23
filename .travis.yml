@@ -13,5 +13,5 @@ before_install:
 - pod install --project-directory=Example
 
 script:
-- set -o pipefail && xcodebuild test -workspace Example/MiniLockCore.xcworkspace -scheme MiniLockCore-Example -sdk iphonesimulator10.3 ONLY_ACTIVE_ARCH=NO -destination 'platform=iOS Simulator,name=iPhone 6,OS=10.3.1' | xcpretty
+- set -o pipefail && xcodebuild test -workspace Example/MiniLockCore.xcworkspace -scheme MiniLockCore-Example -sdk iphonesimulator11.2 ONLY_ACTIVE_ARCH=NO -destination 'platform=iOS Simulator,name=iPhone 8,OS=11.2' | xcpretty
 - pod lib lint --allow-warnings
