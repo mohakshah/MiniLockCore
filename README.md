@@ -10,6 +10,7 @@ The library is an implementation of miniLock's core functionalities in Swift. It
 
 ## Requirements
 
+v1.x requires Xcode 9+. For Xcode 8, use the v0.9.x.
 Although the code is not written to be iOS dependent, so far, the library has been only tested to work on iOS devices. Testing for macOS, watchOS and tvOS are pending. Any contributions here are welcome.
 
 ## Installation
@@ -18,7 +19,7 @@ MiniLockCore is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod "MiniLockCore", '~> 0.9'
+pod "MiniLockCore", '~> 1.0'
 ```
 
 ## Usage

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'MiniLockCore'
-  s.version          = '0.9.2'
+  s.version          = '1.0.0'
   s.summary          = 'Swift implementation of miniLock\'s core functionalities.'
 
   s.description      = <<-DESC
@@ -25,5 +25,5 @@ miniLock's modern and future-proof encryption scheme.
   s.dependency 'libsodium', '~> 1.0'
   s.dependency 'libb2s', '~> 1.0'
   s.dependency 'libbase58', '~> 0.1'
-  s.dependency 'ObjectMapper', '~> 2.2'
+  s.dependency 'ObjectMapper', '~> 3.0'
 end
